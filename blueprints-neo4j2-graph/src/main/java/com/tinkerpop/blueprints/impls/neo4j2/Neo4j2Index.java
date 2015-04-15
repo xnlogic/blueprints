@@ -6,6 +6,7 @@ import com.tinkerpop.blueprints.Index;
 import com.tinkerpop.blueprints.Parameter;
 import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.util.StringFactory;
+
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.PropertyContainer;
 import org.neo4j.graphdb.Relationship;
@@ -33,11 +34,12 @@ public class Neo4j2Index<T extends Neo4j2Element, S extends PropertyContainer> i
         this.generateIndex(indexParameters);
     }
 
-    public Class<T> getIndexClass() {
+    @SuppressWarnings("unchecked")
+	public Class<T> getIndexClass() {
         if (Vertex.class.isAssignableFrom(this.indexClass))
-            return (Class) Vertex.class;
+            return (Class<T>) Vertex.class;
         else
-            return (Class) Edge.class;
+            return (Class<T>) Edge.class;
     }
 
     public String getIndexName() {
