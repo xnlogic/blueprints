@@ -12,7 +12,7 @@
     <name>Blueprints-Neo4j2Graph</name>
     <description>Blueprints property graph implementation for the Neo4j 2 graph database</description>
     <properties>
-        <neo4j.version>2.1.6</neo4j.version>
+        <neo4j.version>2.2.1</neo4j.version>
     </properties>
     <dependencies>
         <dependency>
@@ -60,6 +60,25 @@
             <version>${tinkerpop.version}</version>
             <scope>test</scope>
         </dependency>
+        
+        <dependency>
+			<groupId>org.hibernate</groupId>
+			<artifactId>hibernate</artifactId>
+			<version>3.1</version>
+			<exclusions>
+			<exclusion>
+			<groupId>javax.transaction</groupId>
+			<artifactId>jta</artifactId>
+			</exclusion>
+			</exclusions>
+			</dependency>
+			<dependency>
+			<groupId>geronimo-spec</groupId>
+			<artifactId>geronimo-spec-jta</artifactId>
+			<version>1.0.1B-rc4</version>
+		</dependency>
+        
+        
     </dependencies>
     <build>
         <directory>${basedir}/target</directory>
