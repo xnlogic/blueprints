@@ -160,8 +160,7 @@ public class Neo4j2Vertex extends Neo4j2Element implements Vertex {
 		
 		@Override
 		public void remove() {
-			graph.autoStartTransaction(true);
-			relationshipIterator.remove();
+			throw new UnsupportedOperationException();
 		}
 	}
 	
