@@ -51,6 +51,7 @@ public class DefaultVertexQuery extends DefaultQuery implements VertexQuery {
         return this;
     }
 
+    @Deprecated
     public <T extends Comparable<T>> VertexQuery has(final String key, final T value, final Compare compare) {
         super.has(key, compare, value);
         return this;

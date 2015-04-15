@@ -51,6 +51,7 @@ public class DefaultGraphQuery extends DefaultQuery implements GraphQuery {
         return this;
     }
 
+    @Deprecated
     public <T extends Comparable<T>> GraphQuery has(final String key, final T value, final Compare compare) {
         super.has(key, compare, value);
         return this;
@@ -78,7 +79,8 @@ public class DefaultGraphQuery extends DefaultQuery implements GraphQuery {
 
         private Iterable<T> iterable = null;
 
-        public DefaultGraphQueryIterable(final boolean forVertex) {
+        @SuppressWarnings("unchecked")
+		public DefaultGraphQueryIterable(final boolean forVertex) {
             this.iterable = (Iterable<T>) getElementIterable(forVertex ? Vertex.class : Edge.class);
         }
 

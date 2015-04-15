@@ -41,6 +41,7 @@ public abstract class DefaultQuery implements Query {
         return this;
     }
 
+    @Deprecated
     public <T extends Comparable<T>> Query has(final String key, final T value, final Compare compare) {
         return this.has(key, compare, value);
     }
