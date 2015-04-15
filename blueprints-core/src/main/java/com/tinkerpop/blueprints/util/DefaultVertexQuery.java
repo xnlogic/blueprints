@@ -87,8 +87,10 @@ public class DefaultVertexQuery extends DefaultQuery implements VertexQuery {
 
     public long count() {
         long count = 0;
-        for (final Edge edge : this.edges()) {
-            count++;
+        Iterator<Edge> itr = this.edges().iterator();
+        while(itr.hasNext()){
+        	count++;
+        	itr.next();
         }
         return count;
     }
