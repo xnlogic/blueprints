@@ -5,6 +5,7 @@ import com.tinkerpop.blueprints.Edge;
 import com.tinkerpop.blueprints.Element;
 import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.util.ElementHelper;
+
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.PropertyContainer;
 import org.neo4j.graphdb.Relationship;
@@ -28,7 +29,8 @@ abstract class Neo4j2Element implements Element {
         this.graph = graph;
     }
 
-    public <T> T getProperty(final String key) {
+    @SuppressWarnings("unchecked")
+	public <T> T getProperty(final String key) {
         this.graph.autoStartTransaction(false);
         if (this.rawElement.hasProperty(key))
             return (T) tryConvertCollectionToArrayList(this.rawElement.getProperty(key));
@@ -43,7 +45,8 @@ abstract class Neo4j2Element implements Element {
         this.rawElement.setProperty(key, tryConvertCollectionToArray(value));
     }
 
-    public <T> T removeProperty(final String key) {
+    @SuppressWarnings("unchecked")
+	public <T> T removeProperty(final String key) {
         if (!this.rawElement.hasProperty(key))
             return null;
         else {
