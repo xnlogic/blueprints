@@ -31,7 +31,7 @@ public class Neo4j2Vertex extends Neo4j2Element implements Vertex {
 
     public Iterable<Edge> getEdges(final com.tinkerpop.blueprints.Direction direction, final String... labels) {
         this.graph.autoStartTransaction(false);
-        if (direction.equals(com.tinkerpop.blueprints.Direction.OUT))
+        if (direction.equals(com.tinkerpop.blueprints.Direction.OUT))        	
             return new Neo4jVertexEdgeIterable(this.graph, (Node) this.rawElement, Direction.OUTGOING, labels);
         else if (direction.equals(com.tinkerpop.blueprints.Direction.IN))
             return new Neo4jVertexEdgeIterable(this.graph, (Node) this.rawElement, Direction.INCOMING, labels);

@@ -46,13 +46,10 @@ public class Neo4j2Index<T extends Neo4j2Element, S extends PropertyContainer> i
         return this.indexName;
     }
 
+    @SuppressWarnings("unchecked")
     public void put(final String key, final Object value, final T element) {
-        try {
-            this.graph.autoStartTransaction(true);
-            this.rawIndex.add((S) element.getRawElement(), key, value);
-        } catch (Exception e) {
-            throw new RuntimeException(e.getMessage(), e);
-        }
+    	this.graph.autoStartTransaction(true);
+    	this.rawIndex.add((S) element.getRawElement(), key, value);
     }
 
     /**
