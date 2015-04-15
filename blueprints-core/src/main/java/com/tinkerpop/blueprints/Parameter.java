@@ -1,6 +1,7 @@
 package com.tinkerpop.blueprints;
 
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * A Parameter is simply a pair of objects of type K and of type V.
@@ -32,27 +33,9 @@ public class Parameter<K, V> implements Map.Entry<K, V> {
     }
 
     public boolean equals(Object object) {
-        if (object.getClass().equals(Parameter.class)) {
-            final Object otherKey = ((Parameter) object).getKey();
-            final Object otherValue = ((Parameter) object).getValue();
-            if (otherKey == null) {
-                if (key != null)
-                    return false;
-            } else {
-                if (!otherKey.equals(key))
-                    return false;
-            }
-
-            if (otherValue == null) {
-                if (value != null)
-                    return false;
-            } else {
-                if (!otherValue.equals(value))
-                    return false;
-            }
-            return true;
-        }
-        return false;
+    	return object instanceof Parameter  &&
+        	   Objects.equals(this.key, ((Parameter<?, ?>)object).getKey()) && 
+        	   Objects.equals(this.value, ((Parameter<?, ?>)object).getValue());
     }
 
     @Override
