@@ -4,6 +4,8 @@ import com.tinkerpop.blueprints.Element;
 import com.tinkerpop.blueprints.Graph;
 import com.tinkerpop.blueprints.TransactionalGraph;
 
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -43,5 +45,10 @@ public class KeyIndexableGraphHelper {
             ((TransactionalGraph) graph).commit();
         }
         return counter;
+    }
+    
+    
+    public static long reIndexElements(final Graph graph, final Iterable<? extends Element> elements, final String key) {
+    	return reIndexElements(graph, elements, new HashSet<String>(Arrays.asList(key)));
     }
 }
