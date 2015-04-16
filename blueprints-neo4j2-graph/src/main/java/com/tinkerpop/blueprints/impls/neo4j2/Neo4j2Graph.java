@@ -191,17 +191,17 @@ public class Neo4j2Graph implements TransactionalGraph, IndexableGraph, KeyIndex
     
     
     
-    private <T extends PropertyContainer> void persistAutoIndexerKeys(AutoIndexer<T> indexer, String propertyKey){
-    	this.autoStartTransaction(true);
-    	getGraphProperties().setProperty(propertyKey, indexer.getAutoIndexedProperties().toArray(new String[]{}));
-    }
-    
-    private <T extends PropertyContainer> void persistVertexAutoIndexerKeys(){
+    private void persistVertexAutoIndexerKeys(){
     	persistAutoIndexerKeys(rawGraph.index().getNodeAutoIndexer(), PROPERTY_KEY_AUTO_INDEXED_VERTEX_KEYS);
     }
     
-    private <T extends PropertyContainer> void persistEdgeAutoIndexerKeys(){
+    private void persistEdgeAutoIndexerKeys(){
     	persistAutoIndexerKeys(rawGraph.index().getRelationshipAutoIndexer(), PROPERTY_KEY_AUTO_INDEXED_EDGE_KEYS);
+    }
+    
+    private <T extends PropertyContainer> void persistAutoIndexerKeys(AutoIndexer<T> indexer, String propertyKey){
+    	this.autoStartTransaction(true);
+    	getGraphProperties().setProperty(propertyKey, indexer.getAutoIndexedProperties().toArray(new String[]{}));
     }
     
     
