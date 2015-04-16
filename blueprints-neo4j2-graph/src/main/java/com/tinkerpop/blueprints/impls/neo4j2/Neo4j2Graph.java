@@ -34,7 +34,6 @@ import org.neo4j.graphdb.index.AutoIndexer;
 import org.neo4j.graphdb.index.RelationshipIndex;
 import org.neo4j.kernel.GraphDatabaseAPI;
 import org.neo4j.kernel.impl.core.NodeManager;
-import org.neo4j.kernel.impl.transaction.AbstractTransactionManager;
 import org.neo4j.tooling.GlobalGraphOperations;
 
 import javax.transaction.Status;
@@ -167,7 +166,7 @@ public class Neo4j2Graph implements TransactionalGraph, IndexableGraph, KeyIndex
         }
     }
 
-    protected void init() {
+    protected void init() { 
         this.loadKeyIndices();
     }
 
@@ -401,55 +400,58 @@ public class Neo4j2Graph implements TransactionalGraph, IndexableGraph, KeyIndex
             return new PropertyFilteredIterable<Edge>(key, value, this.getEdges());
     }
 
-    public <T extends Element> void dropKeyIndex(final String key, final Class<T> elementClass) {
-        if (elementClass == null)
+    
+    private <T extends Element> boolean isVertexClass(Class<T> elementClass){
+    	if (elementClass == null){
             throw ExceptionFactory.classForElementCannotBeNull();
-
-        this.autoStartTransaction(true);
-        if (Vertex.class.isAssignableFrom(elementClass)) {
-            if (!this.rawGraph.index().getNodeAutoIndexer().isEnabled())
-                return;
-            this.rawGraph.index().getNodeAutoIndexer().stopAutoIndexingProperty(key);
-        } else if (Edge.class.isAssignableFrom(elementClass)) {
-            if (!this.rawGraph.index().getRelationshipAutoIndexer().isEnabled())
-                return;
-            this.rawGraph.index().getRelationshipAutoIndexer().stopAutoIndexingProperty(key);
-        } else {
-            throw ExceptionFactory.classIsNotIndexable(elementClass);
-        }
-        this.dropInternalIndexKey(key, elementClass);
+    	} else if (Vertex.class.isAssignableFrom(elementClass)) {
+    		return true;
+    	} else if (Edge.class.isAssignableFrom(elementClass)) {
+    		return false;
+    	} else {
+    		throw ExceptionFactory.classIsNotIndexable(elementClass);
+    	}
+    }
+    
+    
+    private <T extends PropertyContainer> void dropKeyIndex(AutoIndexer<T> indexer, String key){
+    	this.autoStartTransaction(true);
+    	if (indexer.isEnabled()){
+    		indexer.stopAutoIndexingProperty(key);
+    	}
+    }
+    
+    public <T extends Element> void dropKeyIndex(final String key, final Class<T> elementClass) {
+    	if(isVertexClass(elementClass)){
+    		dropKeyIndex(this.rawGraph.index().getNodeAutoIndexer(), key);
+    	} else {
+    		dropKeyIndex(this.rawGraph.index().getRelationshipAutoIndexer(), key);
+    	}
     }
 
+    
+    private <T extends PropertyContainer> void createKeyIndex(AutoIndexer<T> indexer, boolean isVertexIndex, String key){
+    	this.autoStartTransaction(true);
+    	
+    	if (!indexer.isEnabled()){
+            indexer.setEnabled(true);
+        }
+
+        if(indexer.getAutoIndexedProperties().contains(key)){
+        	String.format("Nothing to do. %s property, '%s', is already auto-index.", isVertexIndex ? "Vertex" : "Edge", key);
+        } else {
+        	indexer.startAutoIndexingProperty(key);
+        	KeyIndexableGraphHelper.reIndexElements(this, isVertexIndex ? this.getVertices() : this.getEdges(), new HashSet<String>(Arrays.asList(key)));
+        }
+    }
+    
+    
     @SuppressWarnings("rawtypes")
 	public <T extends Element> void createKeyIndex(final String key, final Class<T> elementClass, final Parameter... indexParameters) {
-        if (elementClass == null)
-            throw ExceptionFactory.classForElementCannotBeNull();
-
-        if (Vertex.class.isAssignableFrom(elementClass)) {
-            this.autoStartTransaction(true);
-            if (!this.rawGraph.index().getNodeAutoIndexer().isEnabled())
-                this.rawGraph.index().getNodeAutoIndexer().setEnabled(true);
-
-            this.rawGraph.index().getNodeAutoIndexer().startAutoIndexingProperty(key);
-            if (!this.getInternalIndexKeys(Vertex.class).contains(key)) {
-
-                KeyIndexableGraphHelper.reIndexElements(this, this.getVertices(), new HashSet<String>(Arrays.asList(key)));
-                this.autoStartTransaction(true);
-                this.createInternalIndexKey(key, elementClass);
-            }
-        } else if (Edge.class.isAssignableFrom(elementClass)) {
-            this.autoStartTransaction(true);
-            if (!this.rawGraph.index().getRelationshipAutoIndexer().isEnabled())
-                this.rawGraph.index().getRelationshipAutoIndexer().setEnabled(true);
-
-            this.rawGraph.index().getRelationshipAutoIndexer().startAutoIndexingProperty(key);
-            if (!this.getInternalIndexKeys(Edge.class).contains(key)) {
-                KeyIndexableGraphHelper.reIndexElements(this, this.getEdges(), new HashSet<String>(Arrays.asList(key)));
-                this.autoStartTransaction(true);
-                this.createInternalIndexKey(key, elementClass);
-            }
+        if (isVertexClass(elementClass)){
+        	createKeyIndex(this.rawGraph.index().getNodeAutoIndexer(), true, key);
         } else {
-            throw ExceptionFactory.classIsNotIndexable(elementClass);
+        	createKeyIndex(this.rawGraph.index().getRelationshipAutoIndexer(), false, key);
         }
     }
 
