@@ -19,10 +19,13 @@ import org.apache.commons.configuration.ConfigurationConverter;
 import org.neo4j.cypher.javacompat.ExecutionEngine;
 import org.neo4j.graphdb.DynamicRelationshipType;
 import org.neo4j.graphdb.GraphDatabaseService;
+import org.neo4j.graphdb.Label;
+import org.neo4j.graphdb.MultipleFoundException;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.NotFoundException;
 import org.neo4j.graphdb.PropertyContainer;
 import org.neo4j.graphdb.Relationship;
+import org.neo4j.graphdb.ResourceIterator;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.graphdb.TransactionFailureException;
 import org.neo4j.graphdb.factory.GraphDatabaseBuilder;
@@ -58,7 +61,13 @@ public class Neo4j2Graph implements TransactionalGraph, IndexableGraph, KeyIndex
     private static final Logger logger = Logger.getLogger(Neo4j2Graph.class.getName());
 
     private GraphDatabaseService rawGraph;
-    private static final String INDEXED_KEYS_POSTFIX = ":indexed_keys";
+    
+    
+    public enum InternallyUsedLabels implements Label { Blueprints_GraphProperties };
+    private static final String PROPERTY_KEY_AUTO_INDEXED_VERTEX_KEYS = "AUTO_INDEXED_VERTEX_KEYS";
+    private static final String PROPERTY_KEY_AUTO_INDEXED_EDGE_KEYS = "AUTO_INDEXED_EDGE_KEYS";
+    
+    
 
     protected final ThreadLocal<Transaction> tx = new ThreadLocal<Transaction>() {
         protected Transaction initialValue() {
@@ -182,14 +191,59 @@ public class Neo4j2Graph implements TransactionalGraph, IndexableGraph, KeyIndex
     
     
     
-    private <T extends PropertyContainer> void persistAutoIndexerKeys(AutoIndexer<T> indexer){
-    	// TODO: Implement
-    	// Persist the set of string indexer.getAutoIndexedProperties()
+    private <T extends PropertyContainer> void persistAutoIndexerKeys(AutoIndexer<T> indexer, String propertyKey){
+    	this.autoStartTransaction(true);
+    	getGraphProperties().setProperty(propertyKey, indexer.getAutoIndexedProperties().toArray(new String[]{}));
     }
     
+    private <T extends PropertyContainer> void persistVertexAutoIndexerKeys(){
+    	persistAutoIndexerKeys(rawGraph.index().getNodeAutoIndexer(), PROPERTY_KEY_AUTO_INDEXED_VERTEX_KEYS);
+    }
+    
+    private <T extends PropertyContainer> void persistEdgeAutoIndexerKeys(){
+    	persistAutoIndexerKeys(rawGraph.index().getRelationshipAutoIndexer(), PROPERTY_KEY_AUTO_INDEXED_EDGE_KEYS);
+    }
+    
+    
+    private <T extends Element> void loadKeyIndices(String propertyKey, Class<T> element){
+    	String[] indexedKeys = (String[]) getGraphProperties().getProperty(propertyKey, new String[]{});
+    	for (int i = 0; i < indexedKeys.length; i++) {
+			createKeyIndex(indexedKeys[i], element);
+		}
+    }
+    
+    
     private void loadKeyIndices() {
-    	// TODO: Implement
-    	// Call createKeyIndex on each persisted key
+    	loadKeyIndices(PROPERTY_KEY_AUTO_INDEXED_VERTEX_KEYS, Vertex.class);
+    	loadKeyIndices(PROPERTY_KEY_AUTO_INDEXED_EDGE_KEYS, Edge.class);
+    }
+    
+    
+    
+    /**
+     * @return A property container that persists properties of the graph (instead of a specific node/relationship).
+     */
+    protected PropertyContainer getGraphProperties(){
+    	// This simple implementation stores the graph properties in a vertex with a known label.
+    	
+    	this.autoStartTransaction(false);
+		ResourceIterator<Node> nodes = this.rawGraph.findNodes(InternallyUsedLabels.Blueprints_GraphProperties);
+		// Need to make sure there is only one such vertex ...
+		
+		PropertyContainer result = null;
+		if(! nodes.hasNext()){ // Need to create the vertex ...
+			this.autoStartTransaction(true);
+			result = this.rawGraph.createNode(InternallyUsedLabels.Blueprints_GraphProperties);
+			this.commit();
+		} else {
+			result = nodes.next();
+		}
+		
+		if(nodes.hasNext()){
+			throw new MultipleFoundException("There is more than one vertex with the label " + InternallyUsedLabels.Blueprints_GraphProperties);
+		}
+		
+    	return result;
     }
     
 
@@ -357,20 +411,26 @@ public class Neo4j2Graph implements TransactionalGraph, IndexableGraph, KeyIndex
     }
     
     
-    private <T extends PropertyContainer> void dropKeyIndex(AutoIndexer<T> indexer, String key, boolean persist){
-    	if (indexer.isEnabled() && (! indexer.getAutoIndexedProperties().contains(key))){
+    /**
+     * @return Whether {@code key} was actually indexed.
+     */
+    private <T extends PropertyContainer> boolean dropKeyIndex(AutoIndexer<T> indexer, String key){
+    	if (indexer.isEnabled() && (indexer.getAutoIndexedProperties().contains(key))){
     		indexer.stopAutoIndexingProperty(key);
-    		if(persist){
-    			persistAutoIndexerKeys(indexer);
-    		}
+    		return true;
     	}
+    	return false;
     }
     
     private <T extends Element> void dropKeyIndex(final String key, final Class<T> elementClass, boolean persist) {
     	if(isVertexClass(elementClass)){
-    		dropKeyIndex(this.rawGraph.index().getNodeAutoIndexer(), key, persist);
+    		if(dropKeyIndex(this.rawGraph.index().getNodeAutoIndexer(), key) && persist){
+    			persistVertexAutoIndexerKeys();
+    		}
     	} else {
-    		dropKeyIndex(this.rawGraph.index().getRelationshipAutoIndexer(), key, persist);
+    		if(dropKeyIndex(this.rawGraph.index().getRelationshipAutoIndexer(), key) && persist){
+    			persistEdgeAutoIndexerKeys();
+    		}
     	}
     }
     
@@ -390,9 +450,15 @@ public class Neo4j2Graph implements TransactionalGraph, IndexableGraph, KeyIndex
         } else {
         	indexer.startAutoIndexingProperty(key);
         	this.autoStartTransaction(true);
+        	
         	KeyIndexableGraphHelper.reIndexElements(this, isVertexIndex ? this.getVertices() : this.getEdges(), new HashSet<String>(Arrays.asList(key)));
+        	
         	if(persist){
-        		persistAutoIndexerKeys(indexer);
+        		if(isVertexIndex){
+        			persistVertexAutoIndexerKeys();
+        		} else {
+        			persistEdgeAutoIndexerKeys();
+        		}
         	}
         }
     }
