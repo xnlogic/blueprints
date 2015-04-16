@@ -16,6 +16,7 @@ import com.tinkerpop.blueprints.util.ExceptionFactory;
 import com.tinkerpop.blueprints.util.KeyIndexableGraphHelper;
 import com.tinkerpop.blueprints.util.PropertyFilteredIterable;
 import com.tinkerpop.blueprints.util.StringFactory;
+
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.configuration.ConfigurationConverter;
 import org.neo4j.cypher.javacompat.ExecutionEngine;
@@ -39,6 +40,7 @@ import org.neo4j.tooling.GlobalGraphOperations;
 import javax.transaction.Status;
 import javax.transaction.SystemException;
 import javax.transaction.TransactionManager;
+
 import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -418,7 +420,8 @@ public class Neo4j2Graph implements TransactionalGraph, IndexableGraph, KeyIndex
         this.dropInternalIndexKey(key, elementClass);
     }
 
-    public <T extends Element> void createKeyIndex(final String key, final Class<T> elementClass, final Parameter... indexParameters) {
+    @SuppressWarnings("rawtypes")
+	public <T extends Element> void createKeyIndex(final String key, final Class<T> elementClass, final Parameter... indexParameters) {
         if (elementClass == null)
             throw ExceptionFactory.classForElementCannotBeNull();
 
@@ -532,7 +535,7 @@ public class Neo4j2Graph implements TransactionalGraph, IndexableGraph, KeyIndex
         try {
             tx.get().success();
         } finally {
-            tx.get().finish();
+            tx.get().close();
             tx.remove();
         }
     }
