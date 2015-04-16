@@ -1,21 +1,18 @@
 package com.tinkerpop.blueprints.impls.neo4j2;
 
-import com.tinkerpop.blueprints.Edge;
-import com.tinkerpop.blueprints.Element;
-import com.tinkerpop.blueprints.Features;
-import com.tinkerpop.blueprints.GraphQuery;
-import com.tinkerpop.blueprints.Index;
-import com.tinkerpop.blueprints.IndexableGraph;
-import com.tinkerpop.blueprints.KeyIndexableGraph;
-import com.tinkerpop.blueprints.MetaGraph;
-import com.tinkerpop.blueprints.Parameter;
-import com.tinkerpop.blueprints.TransactionalGraph;
-import com.tinkerpop.blueprints.Vertex;
-import com.tinkerpop.blueprints.util.DefaultGraphQuery;
-import com.tinkerpop.blueprints.util.ExceptionFactory;
-import com.tinkerpop.blueprints.util.KeyIndexableGraphHelper;
-import com.tinkerpop.blueprints.util.PropertyFilteredIterable;
-import com.tinkerpop.blueprints.util.StringFactory;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.logging.Logger;
+
+import javax.transaction.Status;
+import javax.transaction.SystemException;
+import javax.transaction.TransactionManager;
 
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.configuration.ConfigurationConverter;
@@ -33,16 +30,24 @@ import org.neo4j.graphdb.factory.GraphDatabaseFactory;
 import org.neo4j.graphdb.index.AutoIndexer;
 import org.neo4j.graphdb.index.RelationshipIndex;
 import org.neo4j.kernel.GraphDatabaseAPI;
-import org.neo4j.kernel.impl.core.NodeManager;
 import org.neo4j.tooling.GlobalGraphOperations;
 
-import javax.transaction.Status;
-import javax.transaction.SystemException;
-import javax.transaction.TransactionManager;
-
-import java.util.*;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import com.tinkerpop.blueprints.Edge;
+import com.tinkerpop.blueprints.Element;
+import com.tinkerpop.blueprints.Features;
+import com.tinkerpop.blueprints.GraphQuery;
+import com.tinkerpop.blueprints.Index;
+import com.tinkerpop.blueprints.IndexableGraph;
+import com.tinkerpop.blueprints.KeyIndexableGraph;
+import com.tinkerpop.blueprints.MetaGraph;
+import com.tinkerpop.blueprints.Parameter;
+import com.tinkerpop.blueprints.TransactionalGraph;
+import com.tinkerpop.blueprints.Vertex;
+import com.tinkerpop.blueprints.util.DefaultGraphQuery;
+import com.tinkerpop.blueprints.util.ExceptionFactory;
+import com.tinkerpop.blueprints.util.KeyIndexableGraphHelper;
+import com.tinkerpop.blueprints.util.PropertyFilteredIterable;
+import com.tinkerpop.blueprints.util.StringFactory;
 
 /**
  * A Blueprints implementation of the graph database Neo4j (http://neo4j.org)
@@ -300,14 +305,14 @@ public class Neo4j2Graph implements TransactionalGraph, IndexableGraph, KeyIndex
      */
     public Iterable<Vertex> getVertices() {
         this.autoStartTransaction(false);
-        return new Neo4j2VertexIterable(GlobalGraphOperations.at(rawGraph).getAllNodes(), this, this.checkElementsInTransaction());
+        return new Neo4j2ElementIterable<Node, Vertex>(GlobalGraphOperations.at(rawGraph).getAllNodes(), this);
     }
 
     public Iterable<Vertex> getVertices(final String key, final Object value) {
         this.autoStartTransaction(false);
-        final AutoIndexer indexer = this.rawGraph.index().getNodeAutoIndexer();
+        final AutoIndexer<Node> indexer = this.rawGraph.index().getNodeAutoIndexer();
         if (indexer.isEnabled() && indexer.getAutoIndexedProperties().contains(key))
-            return new Neo4j2VertexIterable(this.rawGraph.index().getNodeAutoIndexer().getAutoIndex().get(key, value), this, this.checkElementsInTransaction());
+            return new Neo4j2ElementIterable<Node, Vertex>(this.rawGraph.index().getNodeAutoIndexer().getAutoIndex().get(key, value), this);
         else
             return new PropertyFilteredIterable<Vertex>(key, value, this.getVertices());
     }
@@ -326,15 +331,14 @@ public class Neo4j2Graph implements TransactionalGraph, IndexableGraph, KeyIndex
      */
     public Iterable<Edge> getEdges() {
         this.autoStartTransaction(false);
-        return new Neo4j2EdgeIterable(GlobalGraphOperations.at(rawGraph).getAllRelationships(), this, this.checkElementsInTransaction());
+        return new Neo4j2ElementIterable<Relationship, Edge>(GlobalGraphOperations.at(rawGraph).getAllRelationships(), this);
     }
 
     public Iterable<Edge> getEdges(final String key, final Object value) {
         this.autoStartTransaction(false);
-        final AutoIndexer indexer = this.rawGraph.index().getRelationshipAutoIndexer();
+        final AutoIndexer<Relationship> indexer = this.rawGraph.index().getRelationshipAutoIndexer();
         if (indexer.isEnabled() && indexer.getAutoIndexedProperties().contains(key))
-            return new Neo4j2EdgeIterable(this.rawGraph.index().getRelationshipAutoIndexer().getAutoIndex().get(key, value), this,
-                    this.checkElementsInTransaction());
+            return new Neo4j2ElementIterable<Relationship, Edge>(this.rawGraph.index().getRelationshipAutoIndexer().getAutoIndex().get(key, value), this);
         else
             return new PropertyFilteredIterable<Edge>(key, value, this.getEdges());
     }
@@ -557,10 +561,4 @@ public class Neo4j2Graph implements TransactionalGraph, IndexableGraph, KeyIndex
         return cypher.execute(query,params==null ? Collections.<String,Object>emptyMap() : params).iterator();
     }
 
-    public boolean nodeIsDeleted(long nodeId) {
-        return ((AbstractTransactionManager) transactionManager).getTransactionState().nodeIsDeleted(nodeId);
-    }
-    public boolean relationshipIsDeleted(long nodeId) {
-        return ((AbstractTransactionManager) transactionManager).getTransactionState().relationshipIsDeleted(nodeId);
-    }
 }

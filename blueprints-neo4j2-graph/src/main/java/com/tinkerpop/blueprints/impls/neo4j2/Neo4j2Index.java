@@ -1,20 +1,18 @@
 package com.tinkerpop.blueprints.impls.neo4j2;
 
+import java.util.HashMap;
+import java.util.Map;
+
+import org.neo4j.graphdb.PropertyContainer;
+import org.neo4j.graphdb.index.IndexHits;
+import org.neo4j.graphdb.index.IndexManager;
+
 import com.tinkerpop.blueprints.CloseableIterable;
 import com.tinkerpop.blueprints.Edge;
 import com.tinkerpop.blueprints.Index;
 import com.tinkerpop.blueprints.Parameter;
 import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.util.StringFactory;
-
-import org.neo4j.graphdb.Node;
-import org.neo4j.graphdb.PropertyContainer;
-import org.neo4j.graphdb.Relationship;
-import org.neo4j.graphdb.index.IndexHits;
-import org.neo4j.graphdb.index.IndexManager;
-
-import java.util.HashMap;
-import java.util.Map;
 
 
 /**
@@ -36,12 +34,17 @@ public class Neo4j2Index<T extends Neo4j2Element, S extends PropertyContainer> i
 
     @SuppressWarnings("unchecked")
 	public Class<T> getIndexClass() {
-        if (Vertex.class.isAssignableFrom(this.indexClass))
+        if (isVertexIndex())
             return (Class<T>) Vertex.class;
         else
             return (Class<T>) Edge.class;
     }
+    
+    private boolean isVertexIndex(){
+    	return Vertex.class.isAssignableFrom(this.indexClass);
+    }
 
+    
     public String getIndexName() {
         return this.indexName;
     }
@@ -61,10 +64,7 @@ public class Neo4j2Index<T extends Neo4j2Element, S extends PropertyContainer> i
      */
     public CloseableIterable<T> get(final String key, final Object value) {
         this.graph.autoStartTransaction(false);
-        final IndexHits<S> itty = this.rawIndex.get(key, value);
-        if (this.indexClass.isAssignableFrom(Neo4j2Vertex.class))
-            return new Neo4j2VertexIterable((Iterable<Node>) itty, this.graph, this.graph.checkElementsInTransaction());
-        return new Neo4j2EdgeIterable((Iterable<Relationship>) itty, this.graph, this.graph.checkElementsInTransaction());
+        return new Neo4j2ElementIterable<S, T>(this.rawIndex.get(key, value), this.graph);
     }
 
     /**
@@ -76,10 +76,7 @@ public class Neo4j2Index<T extends Neo4j2Element, S extends PropertyContainer> i
      */
     public CloseableIterable<T> query(final String key, final Object query) {
         this.graph.autoStartTransaction(false);
-        final IndexHits<S> itty = this.rawIndex.query(key, query);
-        if (this.indexClass.isAssignableFrom(Neo4j2Vertex.class))
-            return new Neo4j2VertexIterable((Iterable<Node>) itty, this.graph, this.graph.checkElementsInTransaction());
-        return new Neo4j2EdgeIterable((Iterable<Relationship>) itty, this.graph, this.graph.checkElementsInTransaction());
+        return new Neo4j2ElementIterable<S, T>(this.rawIndex.query(key, query), this.graph);
     }
 
     /**
@@ -91,10 +88,7 @@ public class Neo4j2Index<T extends Neo4j2Element, S extends PropertyContainer> i
      */
     public CloseableIterable<T> query(final Object query) {
         this.graph.autoStartTransaction(false);
-        final IndexHits<S> itty = this.rawIndex.query(query);
-        if (this.indexClass.isAssignableFrom(Neo4j2Vertex.class))
-            return new Neo4j2VertexIterable((Iterable<Node>) itty, this.graph, this.graph.checkElementsInTransaction());
-        return new Neo4j2EdgeIterable((Iterable<Relationship>) itty, this.graph, this.graph.checkElementsInTransaction());
+        return new Neo4j2ElementIterable<S, T>(this.rawIndex.query(query), this.graph);
     }
 
     /**
@@ -107,7 +101,7 @@ public class Neo4j2Index<T extends Neo4j2Element, S extends PropertyContainer> i
     public long count(final String key, final Object value) {
         this.graph.autoStartTransaction(false);
         if (!this.graph.checkElementsInTransaction()) {
-            final IndexHits hits = this.rawIndex.get(key, value);
+            final IndexHits<S> hits = this.rawIndex.get(key, value);
             final long count = hits.size();
             hits.close();
             return count;
