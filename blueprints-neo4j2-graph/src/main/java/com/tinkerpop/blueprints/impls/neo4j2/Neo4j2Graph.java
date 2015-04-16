@@ -174,81 +174,20 @@ public class Neo4j2Graph implements TransactionalGraph, IndexableGraph, KeyIndex
         this(configuration.getString("blueprints.neo4j.directory", null),
                 ConfigurationConverter.getMap(configuration.subset("blueprints.neo4j.conf")));
     }
-
+    
+    
+    
+    private <T extends PropertyContainer> void persistAutoIndexerKeys(AutoIndexer<T> indexer){
+    	// TODO: Implement
+    	// Persist the set of string indexer.getAutoIndexedProperties()
+    }
+    
     private void loadKeyIndices() {
-        this.autoStartTransaction(true);
-        for (final String key : this.getInternalIndexKeys(Vertex.class)) {
-            this.createKeyIndex(key, Vertex.class);
-        }
-        for (final String key : this.getInternalIndexKeys(Edge.class)) {
-            this.createKeyIndex(key, Edge.class);
-        }
-        this.commit();
+    	// TODO: Implement
+    	// Call createKeyIndex on each persisted key
     }
+    
 
-    private <T extends Element> void createInternalIndexKey(final String key, final Class<T> elementClass) {
-        final String propertyName = elementClass.getSimpleName() + INDEXED_KEYS_POSTFIX;
-        if (rawGraph instanceof GraphDatabaseAPI) {
-            final PropertyContainer pc = getGraphProperties();
-            try {
-                final String[] keys = (String[]) pc.getProperty(propertyName);
-                final Set<String> temp = new HashSet<String>(Arrays.asList(keys));
-                temp.add(key);
-                pc.setProperty(propertyName, temp.toArray(new String[temp.size()]));
-            } catch (Exception e) {
-                // no indexed_keys kernel data property
-                pc.setProperty(propertyName, new String[]{key});
-
-            }
-        } else {
-            throw new UnsupportedOperationException(
-                    "Unable to create an index on a non-GraphDatabaseAPI graph");
-        }
-    }
-
-    private <T extends Element> void dropInternalIndexKey(final String key, final Class<T> elementClass) {
-        final String propertyName = elementClass.getSimpleName() + INDEXED_KEYS_POSTFIX;
-        if (rawGraph instanceof GraphDatabaseAPI) {
-            final PropertyContainer pc = getGraphProperties();
-            try {
-                final String[] keys = (String[]) pc.getProperty(propertyName);
-                final Set<String> temp = new HashSet<String>(Arrays.asList(keys));
-                temp.remove(key);
-                pc.setProperty(propertyName, temp.toArray(new String[temp.size()]));
-            } catch (Exception e) {
-                // no indexed_keys kernel data property
-            }
-        } else {
-            logNotGraphDatabaseAPI();
-        }
-    }
-
-    public <T extends Element> Set<String> getInternalIndexKeys(final Class<T> elementClass) {
-        final String propertyName = elementClass.getSimpleName() + INDEXED_KEYS_POSTFIX;
-        if (rawGraph instanceof GraphDatabaseAPI) {
-            final PropertyContainer pc = getGraphProperties();
-            try {
-                final String[] keys = (String[]) pc.getProperty(propertyName);
-                return new HashSet<String>(Arrays.asList(keys));
-            } catch (Exception e) {
-                // no indexed_keys kernel data property
-            }
-        } else {
-            logNotGraphDatabaseAPI();
-        }
-        return Collections.emptySet();
-    }
-
-    private PropertyContainer getGraphProperties() {
-        return ((GraphDatabaseAPI) this.rawGraph).getDependencyResolver().resolveDependency(NodeManager.class).getGraphProperties();
-    }
-
-    private void logNotGraphDatabaseAPI() {
-        if (logger.isLoggable(Level.WARNING)) {
-            logger.log(Level.WARNING, "Indices are not available on non-GraphDatabaseAPI instances" +
-                    " Current graph class is " + rawGraph.getClass().getName());
-        }
-    }
 
     public synchronized <T extends Element> Index<T> createIndex(final String indexName, final Class<T> indexClass, final Parameter... indexParameters) {
         this.autoStartTransaction(true);
@@ -414,25 +353,30 @@ public class Neo4j2Graph implements TransactionalGraph, IndexableGraph, KeyIndex
     }
     
     
-    private <T extends PropertyContainer> void dropKeyIndex(AutoIndexer<T> indexer, String key){
-    	this.autoStartTransaction(true);
-    	if (indexer.isEnabled()){
+    private <T extends PropertyContainer> void dropKeyIndex(AutoIndexer<T> indexer, String key, boolean persist){
+    	if (indexer.isEnabled() && (! indexer.getAutoIndexedProperties().contains(key))){
     		indexer.stopAutoIndexingProperty(key);
+    		if(persist){
+    			persistAutoIndexerKeys(indexer);
+    		}
     	}
     }
     
-    public <T extends Element> void dropKeyIndex(final String key, final Class<T> elementClass) {
+    private <T extends Element> void dropKeyIndex(final String key, final Class<T> elementClass, boolean persist) {
     	if(isVertexClass(elementClass)){
-    		dropKeyIndex(this.rawGraph.index().getNodeAutoIndexer(), key);
+    		dropKeyIndex(this.rawGraph.index().getNodeAutoIndexer(), key, persist);
     	} else {
-    		dropKeyIndex(this.rawGraph.index().getRelationshipAutoIndexer(), key);
+    		dropKeyIndex(this.rawGraph.index().getRelationshipAutoIndexer(), key, persist);
     	}
+    }
+    
+    @Override
+    public <T extends Element> void dropKeyIndex(final String key, final Class<T> elementClass) {
+    	dropKeyIndex(key, elementClass, true);
     }
 
     
-    private <T extends PropertyContainer> void createKeyIndex(AutoIndexer<T> indexer, boolean isVertexIndex, String key){
-    	this.autoStartTransaction(true);
-    	
+    private <T extends PropertyContainer> void createKeyIndex(AutoIndexer<T> indexer, boolean isVertexIndex, String key, boolean persist){
     	if (!indexer.isEnabled()){
             indexer.setEnabled(true);
         }
@@ -441,35 +385,45 @@ public class Neo4j2Graph implements TransactionalGraph, IndexableGraph, KeyIndex
         	String.format("Nothing to do. %s property, '%s', is already auto-index.", isVertexIndex ? "Vertex" : "Edge", key);
         } else {
         	indexer.startAutoIndexingProperty(key);
+        	this.autoStartTransaction(true);
         	KeyIndexableGraphHelper.reIndexElements(this, isVertexIndex ? this.getVertices() : this.getEdges(), new HashSet<String>(Arrays.asList(key)));
+        	if(persist){
+        		persistAutoIndexerKeys(indexer);
+        	}
         }
     }
     
     
+	private <T extends Element> void createKeyIndex(final String key, final Class<T> elementClass, boolean persist) {
+        if (isVertexClass(elementClass)){
+        	createKeyIndex(this.rawGraph.index().getNodeAutoIndexer(), true, key, persist);
+        } else {
+        	createKeyIndex(this.rawGraph.index().getRelationshipAutoIndexer(), false, key, persist);
+        }
+    }
+    
+    @Override
     @SuppressWarnings("rawtypes")
 	public <T extends Element> void createKeyIndex(final String key, final Class<T> elementClass, final Parameter... indexParameters) {
-        if (isVertexClass(elementClass)){
-        	createKeyIndex(this.rawGraph.index().getNodeAutoIndexer(), true, key);
-        } else {
-        	createKeyIndex(this.rawGraph.index().getRelationshipAutoIndexer(), false, key);
-        }
+    	createKeyIndex(key, elementClass, true);
     }
 
+    
+    private <T extends PropertyContainer> Set<String> getIndexedKeys(AutoIndexer<T> indexer) {
+    	if (indexer.isEnabled()){
+    		return indexer.getAutoIndexedProperties();
+    	} else {
+    		return Collections.emptySet();
+    	}
+    }
+    
+    @Override
     public <T extends Element> Set<String> getIndexedKeys(final Class<T> elementClass) {
-        if (elementClass == null)
-            throw ExceptionFactory.classForElementCannotBeNull();
-
-        if (Vertex.class.isAssignableFrom(elementClass)) {
-            if (!this.rawGraph.index().getNodeAutoIndexer().isEnabled())
-                return Collections.emptySet();
-            return this.rawGraph.index().getNodeAutoIndexer().getAutoIndexedProperties();
-        } else if (Edge.class.isAssignableFrom(elementClass)) {
-            if (!this.rawGraph.index().getRelationshipAutoIndexer().isEnabled())
-                return Collections.emptySet();
-            return this.rawGraph.index().getRelationshipAutoIndexer().getAutoIndexedProperties();
-        } else {
-            throw ExceptionFactory.classIsNotIndexable(elementClass);
-        }
+    	if(isVertexClass(elementClass)){
+    		return getIndexedKeys(rawGraph.index().getNodeAutoIndexer());
+    	} else {
+    		return getIndexedKeys(rawGraph.index().getRelationshipAutoIndexer());
+    	}
     }
 
     public void removeVertex(final Vertex vertex) {
