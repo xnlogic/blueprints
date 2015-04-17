@@ -10,11 +10,16 @@ import com.tinkerpop.blueprints.KeyIndexableGraph;
 import com.tinkerpop.blueprints.MetaGraph;
 import com.tinkerpop.blueprints.Parameter;
 import com.tinkerpop.blueprints.Vertex;
+import com.tinkerpop.blueprints.impls.neo4j2.Neo4j2Graph.InternallyUsedLabels;
 import com.tinkerpop.blueprints.util.ExceptionFactory;
 import com.tinkerpop.blueprints.util.StringFactory;
+
 import org.neo4j.graphdb.DynamicRelationshipType;
 import org.neo4j.graphdb.GraphDatabaseService;
+import org.neo4j.graphdb.MultipleFoundException;
+import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.PropertyContainer;
+import org.neo4j.graphdb.ResourceIterator;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.graphdb.factory.GraphDatabaseBuilder;
 import org.neo4j.graphdb.factory.GraphDatabaseFactory;
@@ -170,9 +175,6 @@ public class Neo4j2BatchGraph implements KeyIndexableGraph, IndexableGraph, Meta
         final Set<String> properties = rawAutoIndexer.getAutoIndexedProperties();
         Transaction tx = rawGraphDB.beginTx();
 
-        final PropertyContainer kernel = ((GraphDatabaseAPI) rawGraphDB).getDependencyResolver().resolveDependency(NodeManager.class).getGraphProperties();
-        kernel.setProperty(elementClass.getSimpleName() + INDEXED_KEYS_POSTFIX, properties.toArray(new String[properties.size()]));
-
         int count = 0;
         for (final PropertyContainer pc : rawElements) {
             for (final String property : properties) {
@@ -198,7 +200,7 @@ public class Neo4j2BatchGraph implements KeyIndexableGraph, IndexableGraph, Meta
     public BatchInserter getRawGraph() {
         return this.rawGraph;
     }
-
+    
     /**
      * {@inheritDoc}
      * <p/>
