@@ -1,10 +1,22 @@
 package com.tinkerpop.blueprints.impls.neo4j2;
 
-import com.tinkerpop.blueprints.Vertex;
+import static org.junit.Assert.assertThat;
+
+import java.util.Map;
+
 import org.hamcrest.core.Is;
 import org.hamcrest.core.IsNull;
 import org.junit.Test;
-import org.neo4j.graphdb.*;
+import org.neo4j.graphdb.GraphDatabaseService;
+import org.neo4j.graphdb.Label;
+import org.neo4j.graphdb.Node;
+import org.neo4j.graphdb.QueryExecutionException;
+import org.neo4j.graphdb.Relationship;
+import org.neo4j.graphdb.RelationshipType;
+import org.neo4j.graphdb.ResourceIterable;
+import org.neo4j.graphdb.ResourceIterator;
+import org.neo4j.graphdb.Result;
+import org.neo4j.graphdb.Transaction;
 import org.neo4j.graphdb.event.KernelEventHandler;
 import org.neo4j.graphdb.event.TransactionEventHandler;
 import org.neo4j.graphdb.factory.GraphDatabaseFactory;
@@ -12,11 +24,8 @@ import org.neo4j.graphdb.index.IndexManager;
 import org.neo4j.graphdb.schema.Schema;
 import org.neo4j.graphdb.traversal.BidirectionalTraversalDescription;
 import org.neo4j.graphdb.traversal.TraversalDescription;
-import org.neo4j.kernel.GraphDatabaseAPI;
-import org.neo4j.kernel.TransactionBuilder;
-import org.neo4j.kernel.impl.nioneo.store.StoreId;
 
-import static org.junit.Assert.assertThat;
+import com.tinkerpop.blueprints.Vertex;
 
 public class Neo4j2GraphUsingANonInternalAbstractGraphClassFail {
     private class LazyLoadedGraphDatabase implements GraphDatabaseService {
@@ -151,8 +160,13 @@ public class Neo4j2GraphUsingANonInternalAbstractGraphClassFail {
         }
 
         @Override
-        public ResourceIterable<Node> findNodesByLabelAndProperty(Label label, String key, Object value) {
-            return getLazy().findNodesByLabelAndProperty(label,key,value);
+        public ResourceIterable<Node> findNodesByLabelAndProperty(final Label label, final String key, final Object value) {
+            return new ResourceIterable<Node>() {
+				@Override
+				public ResourceIterator<Node> iterator() {
+					return getLazy().findNodes(label, key, value);
+				}
+			};
         }
 
         @Override
@@ -174,34 +188,33 @@ public class Neo4j2GraphUsingANonInternalAbstractGraphClassFail {
         public BidirectionalTraversalDescription bidirectionalTraversalDescription() {
             return getLazy().bidirectionalTraversalDescription();
         }
+
+		@Override
+		public ResourceIterator<Node> findNodes(Label label, String key, Object value) {
+			return getLazy().findNodes(label, key, value);
+		}
+
+		@Override
+		public Node findNode(Label label, String key, Object value) {
+			return getLazy().findNode(label, key, value);
+		}
+
+		@Override
+		public ResourceIterator<Node> findNodes(Label label) {
+			return getLazy().findNodes(label);
+		}
+
+		@Override
+		public Result execute(String query) throws QueryExecutionException {
+			return getLazy().execute(query);
+		}
+
+		@Override
+		public Result execute(String query, Map<String, Object> parameters) throws QueryExecutionException {
+			return getLazy().execute(query, parameters);
+		}
     }
 
-    private class LazyLoadableGraphAPI extends LazyLoadedGraphDatabase implements GraphDatabaseAPI {
-
-        @Override
-        public DependencyResolver getDependencyResolver() {
-            return ((GraphDatabaseAPI) getLazy()).getDependencyResolver();
-        }
-
-        @Override
-        @Deprecated
-        public String getStoreDir() {
-            return ((GraphDatabaseAPI) getLazy()).getStoreDir();
-        }
-
-        @Override
-        @Deprecated
-        public StoreId storeId() {
-            return ((GraphDatabaseAPI) getLazy()).storeId();
-        }
-
-        @Override
-        @Deprecated
-        public TransactionBuilder tx() {
-            return ((GraphDatabaseAPI) getLazy()).tx();
-        }
-
-    }
 
     /**
      * in this test, our class is a graph database service, but not an InternalAbstractGraphDatabase instance.As a consequence, {@link Neo4j2Graph#getInternalIndexKeys}
@@ -222,7 +235,7 @@ public class Neo4j2GraphUsingANonInternalAbstractGraphClassFail {
     @Test
     public void loadingANeo4jGraphFromAnyGraphAPIClassShouldWork() throws ClassCastException {
         String METHOD_NAME = "#loadingANeo4jGraphFromAnyGraphAPIClassShouldWork";
-        Neo4j2Graph tested = new Neo4j2Graph(new LazyLoadableGraphAPI());
+        Neo4j2Graph tested = new Neo4j2Graph(new LazyLoadedGraphDatabase());
         assertThat(tested, IsNull.notNullValue());
         // at startup there is no index
         assertThat(tested.getIndices().iterator().hasNext(), Is.is(false));
