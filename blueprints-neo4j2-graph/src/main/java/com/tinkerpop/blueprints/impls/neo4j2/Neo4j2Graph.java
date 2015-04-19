@@ -16,7 +16,7 @@ import javax.transaction.TransactionManager;
 
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.configuration.ConfigurationConverter;
-import org.neo4j.cypher.javacompat.ExecutionEngine;
+import org.neo4j.cypher.ExecutionEngine;
 import org.neo4j.graphdb.DynamicRelationshipType;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Label;
@@ -156,7 +156,7 @@ public class Neo4j2Graph implements TransactionalGraph, IndexableGraph, KeyIndex
 
         transactionManager = ((GraphDatabaseAPI) rawGraph).getDependencyResolver().resolveDependency(TransactionManager.class);
 
-        cypher = new ExecutionEngine(rawGraph);
+        cypher = new ExecutionEngine(rawGraph, null);
         init();
     }
 
@@ -169,7 +169,7 @@ public class Neo4j2Graph implements TransactionalGraph, IndexableGraph, KeyIndex
                 this.rawGraph = builder.newGraphDatabase();
 
             transactionManager = ((GraphDatabaseAPI) rawGraph).getDependencyResolver().resolveDependency(TransactionManager.class);
-            cypher = new ExecutionEngine(rawGraph);
+            cypher = new ExecutionEngine(rawGraph, null);
 
             init();
 
@@ -624,7 +624,7 @@ public class Neo4j2Graph implements TransactionalGraph, IndexableGraph, KeyIndex
     }
 
     public Iterator<Map<String,Object>> query(String query, Map<String,Object> params) {
-        return cypher.execute(query,params==null ? Collections.<String,Object>emptyMap() : params).iterator();
+        return cypher.execute(query,params==null ? Collections.<String,Object>emptyMap() : params).javaIterator();
     }
 
 }
