@@ -7,6 +7,7 @@ import org.neo4j.graphdb.index.IndexHits;
 
 import com.tinkerpop.blueprints.CloseableIterable;
 import com.tinkerpop.blueprints.Element;
+import com.tinkerpop.blueprints.impls.neo4j2.Neo4j2ElementIterator.SkipCondition;
 
 /**
  * 
@@ -21,16 +22,22 @@ public class Neo4j2ElementIterable<T extends PropertyContainer, S extends Elemen
 
     private final Iterable<T> elements;
     private final Neo4j2Graph graph;
+    private final SkipCondition<T> skipCondition;
 
-    public Neo4j2ElementIterable(final Iterable<T> elements, final Neo4j2Graph graph) {
+    public Neo4j2ElementIterable(final Iterable<T> elements, final Neo4j2Graph graph, SkipCondition<T> skipCondition) {
         this.graph = graph;
         this.elements = elements;
+        this.skipCondition = skipCondition;
+    }
+    
+    public Neo4j2ElementIterable(final Iterable<T> elements, final Neo4j2Graph graph) {
+    	this(elements, graph, null);
     }
 
 	
 	@Override
 	public Iterator<S> iterator() {
-		return new Neo4j2ElementIterator<T, S>(this.elements, this.graph);
+		return new Neo4j2ElementIterator<T, S>(this.elements, this.graph, this.skipCondition);
 	}
 
 	

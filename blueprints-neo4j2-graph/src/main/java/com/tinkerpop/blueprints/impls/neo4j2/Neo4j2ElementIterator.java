@@ -22,16 +22,25 @@ import com.tinkerpop.blueprints.Element;
  */
 public class Neo4j2ElementIterator<T extends PropertyContainer, S extends Element> implements Iterator<S>{
 	
+	public static interface SkipCondition<T extends PropertyContainer> {
+		public boolean shouldSkip(T element);
+	}
+	
 	private final Iterator<T> elementIterator;
 	private final Neo4j2Graph graph;
     private T nextElement = null;
+    private SkipCondition<T> skipCondition;
     
-    public Neo4j2ElementIterator(final Iterable<T> elements, final Neo4j2Graph graph) {
+    public Neo4j2ElementIterator(final Iterable<T> elements, final Neo4j2Graph graph, SkipCondition<T> skipCondition) {
 		this.elementIterator = elements.iterator();
 		this.graph = graph;
+		this.skipCondition = skipCondition;
 		fetchNextElement();
 	}
     
+    public Neo4j2ElementIterator(final Iterable<T> elements, final Neo4j2Graph graph) {
+    	this(elements, graph, null);
+    }
     
     protected boolean isDeleted(PropertyContainer element){
     	try {
@@ -48,6 +57,9 @@ public class Neo4j2ElementIterator<T extends PropertyContainer, S extends Elemen
     	
     	while(elementIterator.hasNext()){
     		T element = elementIterator.next();
+    		if(skipCondition != null && skipCondition.shouldSkip(element)){
+    			continue;
+    		}
     		if(! isDeleted(element)){
     			nextElement = element;
     			break;

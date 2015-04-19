@@ -42,6 +42,7 @@ import com.tinkerpop.blueprints.MetaGraph;
 import com.tinkerpop.blueprints.Parameter;
 import com.tinkerpop.blueprints.TransactionalGraph;
 import com.tinkerpop.blueprints.Vertex;
+import com.tinkerpop.blueprints.impls.neo4j2.Neo4j2ElementIterator.SkipCondition;
 import com.tinkerpop.blueprints.util.DefaultGraphQuery;
 import com.tinkerpop.blueprints.util.ExceptionFactory;
 import com.tinkerpop.blueprints.util.KeyIndexableGraphHelper;
@@ -75,6 +76,15 @@ public class Neo4j2Graph implements TransactionalGraph, IndexableGraph, KeyIndex
     public enum InternallyUsedLabels implements Label { Blueprints_GraphProperties };
     private static final String PROPERTY_KEY_AUTO_INDEXED_VERTEX_KEYS = "AUTO_INDEXED_VERTEX_KEYS";
     private static final String PROPERTY_KEY_AUTO_INDEXED_EDGE_KEYS = "AUTO_INDEXED_EDGE_KEYS";
+    
+    
+    private static SkipCondition<Node> skipInternallyUsedNodes = new SkipCondition<Node>() {
+		@Override
+		public boolean shouldSkip(Node element) {
+			return element.hasLabel(InternallyUsedLabels.Blueprints_GraphProperties);
+		}
+	};
+    
     
     
 
@@ -358,14 +368,14 @@ public class Neo4j2Graph implements TransactionalGraph, IndexableGraph, KeyIndex
      */
     public Iterable<Vertex> getVertices() {
         this.autoStartTransaction(false);
-        return new Neo4j2ElementIterable<Node, Vertex>(GlobalGraphOperations.at(rawGraph).getAllNodes(), this);
+        return new Neo4j2ElementIterable<Node, Vertex>(GlobalGraphOperations.at(rawGraph).getAllNodes(), this, skipInternallyUsedNodes);
     }
 
     public Iterable<Vertex> getVertices(final String key, final Object value) {
         this.autoStartTransaction(false);
         final AutoIndexer<Node> indexer = this.rawGraph.index().getNodeAutoIndexer();
         if (indexer.isEnabled() && indexer.getAutoIndexedProperties().contains(key))
-            return new Neo4j2ElementIterable<Node, Vertex>(this.rawGraph.index().getNodeAutoIndexer().getAutoIndex().get(key, value), this);
+            return new Neo4j2ElementIterable<Node, Vertex>(this.rawGraph.index().getNodeAutoIndexer().getAutoIndex().get(key, value), this, skipInternallyUsedNodes);
         else
             return new PropertyFilteredIterable<Vertex>(key, value, this.getVertices());
     }
