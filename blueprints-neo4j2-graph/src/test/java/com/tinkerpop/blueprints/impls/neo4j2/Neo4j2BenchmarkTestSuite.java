@@ -7,10 +7,12 @@ import com.tinkerpop.blueprints.TestSuite;
 import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.impls.GraphTest;
 import com.tinkerpop.blueprints.util.io.graphml.GraphMLReader;
+
 import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
+import org.neo4j.tooling.GlobalGraphOperations;
 
 /**
  * @author Marko A. Rodriguez (http://markorodriguez.com)
@@ -37,7 +39,7 @@ public class Neo4j2BenchmarkTestSuite extends TestSuite {
             GraphDatabaseService neo4j = ((Neo4j2Graph) graph).getRawGraph();
             int counter = 0;
             this.stopWatch();
-            for (final Node node : neo4j.getAllNodes()) {
+            for (final Node node : GlobalGraphOperations.at(neo4j).getAllNodes()) {
                 counter++;
                 for (final Relationship relationship : node.getRelationships(Direction.OUTGOING)) {
                     counter++;
