@@ -18,7 +18,8 @@ class Neo4j2BatchVertex extends Neo4j2BatchElement implements Vertex {
         super(graph, id);
     }
 
-    public <T> T removeProperty(final String key) {
+    @SuppressWarnings("unchecked")
+	public <T> T removeProperty(final String key) {
         final Map<String, Object> properties = this.getPropertyMapClone();
         final Object value = properties.remove(key);
         this.graph.getRawGraph().setNodeProperties(this.id, properties);

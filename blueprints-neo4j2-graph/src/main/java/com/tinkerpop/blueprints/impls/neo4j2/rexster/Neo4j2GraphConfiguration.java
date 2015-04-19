@@ -7,6 +7,7 @@ import com.tinkerpop.rexster.Tokens;
 import com.tinkerpop.rexster.config.GraphConfiguration;
 import com.tinkerpop.rexster.config.GraphConfigurationContext;
 import com.tinkerpop.rexster.config.GraphConfigurationException;
+
 import org.apache.commons.configuration.HierarchicalConfiguration;
 import org.apache.commons.configuration.SubnodeConfiguration;
 
@@ -45,7 +46,8 @@ public class Neo4j2GraphConfiguration implements GraphConfiguration {
 
             // read the properties from the xml file and convert them to properties
             // to be injected into neo4j.
-            final Iterator<String> neo4jSpecificConfigurationKeys = neo4jSpecificConfiguration.getKeys();
+            @SuppressWarnings("unchecked")
+			final Iterator<String> neo4jSpecificConfigurationKeys = neo4jSpecificConfiguration.getKeys();
             while (neo4jSpecificConfigurationKeys.hasNext()) {
                 String key = neo4jSpecificConfigurationKeys.next();
 
