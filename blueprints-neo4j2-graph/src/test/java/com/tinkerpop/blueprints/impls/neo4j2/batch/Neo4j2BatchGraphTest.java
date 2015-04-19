@@ -141,7 +141,7 @@ public class Neo4j2BatchGraphTest extends BaseTest {
         Index<Edge> edgeIndex = batch.createIndex("edgeIdx", Edge.class);
         assertEquals(1, count(batch.getIndices()));
 
-        for (final Index index : batch.getIndices()) {
+        for (final Index<?> index : batch.getIndices()) {
             if (index.getIndexName().equals("edgeIdx")) {
                 assertEquals(index.getIndexClass(), Edge.class);
             } else {
