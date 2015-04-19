@@ -29,6 +29,7 @@ import org.neo4j.graphdb.factory.GraphDatabaseFactory;
 import org.neo4j.graphdb.index.AutoIndexer;
 import org.neo4j.graphdb.index.RelationshipIndex;
 import org.neo4j.helpers.Settings;
+import org.neo4j.kernel.impl.util.StringLogger;
 import org.neo4j.tooling.GlobalGraphOperations;
 
 import com.tinkerpop.blueprints.Edge;
@@ -183,7 +184,7 @@ public class Neo4j2Graph implements TransactionalGraph, IndexableGraph, KeyIndex
     public Neo4j2Graph(final GraphDatabaseService rawGraph) {
         try{
         	this.rawGraph = rawGraph;
-        	cypher = new ExecutionEngine(rawGraph, null);
+        	cypher = new ExecutionEngine(rawGraph, StringLogger.DEV_NULL);
             init();
         } catch (RuntimeException e) {
     		if (this.rawGraph != null)
