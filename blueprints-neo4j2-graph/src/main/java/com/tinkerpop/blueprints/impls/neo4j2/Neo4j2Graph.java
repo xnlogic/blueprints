@@ -28,6 +28,7 @@ import org.neo4j.graphdb.factory.GraphDatabaseBuilder;
 import org.neo4j.graphdb.factory.GraphDatabaseFactory;
 import org.neo4j.graphdb.index.AutoIndexer;
 import org.neo4j.graphdb.index.RelationshipIndex;
+import org.neo4j.helpers.Settings;
 import org.neo4j.tooling.GlobalGraphOperations;
 
 import com.tinkerpop.blueprints.Edge;
@@ -53,7 +54,20 @@ import com.tinkerpop.blueprints.util.StringFactory;
  * @author Marko A. Rodriguez (http://markorodriguez.com)
  */
 public class Neo4j2Graph implements TransactionalGraph, IndexableGraph, KeyIndexableGraph, MetaGraph<GraphDatabaseService> {
+	
     private static final Logger logger = Logger.getLogger(Neo4j2Graph.class.getName());
+
+    
+    private static GraphDatabaseBuilder createBuilder(String directory, Map<String, String> configuration){
+        GraphDatabaseBuilder builder = new GraphDatabaseFactory().newEmbeddedDatabaseBuilder(directory);
+        if (null != configuration){
+                for(String key: configuration.keySet()){
+                        Settings.setting(key, Settings.STRING, configuration.get(key));
+                }
+        }
+        return builder;
+    }
+
 
     private GraphDatabaseService rawGraph;
     
@@ -145,42 +159,34 @@ public class Neo4j2Graph implements TransactionalGraph, IndexableGraph, KeyIndex
     public Neo4j2Graph(final String directory) {
         this(directory, null);
     }
-
-    public Neo4j2Graph(final GraphDatabaseService rawGraph) {
-        this.rawGraph = rawGraph;
-
-        cypher = new ExecutionEngine(rawGraph, null);
-        init();
-    }
-
-    public Neo4j2Graph(final String directory, final Map<String, String> configuration) {
-        try {
-            GraphDatabaseBuilder builder = new GraphDatabaseFactory().newEmbeddedDatabaseBuilder(directory);
-            if (null != configuration)
-                this.rawGraph = builder.setConfig(configuration).newGraphDatabase();
-            else
-                this.rawGraph = builder.newGraphDatabase();
-
-            cypher = new ExecutionEngine(rawGraph, null);
-
-            init();
-
-        } catch (Exception e) {
-            if (this.rawGraph != null)
-                this.rawGraph.shutdown();
-            throw new RuntimeException(e.getMessage(), e);
-        }
-    }
-
-    protected void init() { 
-        this.loadKeyIndices();
-    }
-
+    
     public Neo4j2Graph(final Configuration configuration) {
         this(configuration.getString("blueprints.neo4j.directory", null),
                 ConfigurationConverter.getMap(configuration.subset("blueprints.neo4j.conf")));
     }
     
+    public Neo4j2Graph(final String directory, final Map<String, String> configuration) {
+    	this(createBuilder(directory, configuration).newGraphDatabase());
+    }
+
+    public Neo4j2Graph(final GraphDatabaseService rawGraph) {
+        try{
+        	this.rawGraph = rawGraph;
+        	cypher = new ExecutionEngine(rawGraph, null);
+            init();
+        } catch (RuntimeException e) {
+    		if (this.rawGraph != null)
+                this.rawGraph.shutdown();
+    		throw e;
+        } 
+        
+    }
+
+
+    protected void init() { 
+        this.loadKeyIndices();
+    }
+
     
     
     private void persistVertexAutoIndexerKeys(){
