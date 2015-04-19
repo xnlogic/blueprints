@@ -233,6 +233,7 @@ public class Neo4j2Graph implements TransactionalGraph, IndexableGraph, KeyIndex
 			this.autoStartTransaction(true);
 			result = this.rawGraph.createNode(InternallyUsedLabels.Blueprints_GraphProperties);
 			this.commit();
+			this.autoStartTransaction(false);
 		} else {
 			result = nodes.next();
 		}
