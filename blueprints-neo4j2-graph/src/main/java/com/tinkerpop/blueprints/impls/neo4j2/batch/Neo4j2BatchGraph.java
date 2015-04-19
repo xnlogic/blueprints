@@ -57,8 +57,6 @@ public class Neo4j2BatchGraph implements KeyIndexableGraph, IndexableGraph, Meta
 
     private static final Features FEATURES = new Features();
 
-    private static final String INDEXED_KEYS_POSTFIX = ":indexed_keys";
-
     static {
 
         FEATURES.supportsSerializableObjectProperty = false;
@@ -127,7 +125,7 @@ public class Neo4j2BatchGraph implements KeyIndexableGraph, IndexableGraph, Meta
      * Note that key indices are not usable until the Neo4j2BatchGraph has been shutdown.
      */
     public void flushIndices() {
-        for (final Neo4j2BatchIndex index : this.indices.values()) {
+        for (final Neo4j2BatchIndex<?> index : this.indices.values()) {
             index.flush();
         }
     }
@@ -147,9 +145,9 @@ public class Neo4j2BatchGraph implements KeyIndexableGraph, IndexableGraph, Meta
             try {
                 GlobalGraphOperations graphOperations = GlobalGraphOperations.at(rawGraphDB);
                 if (this.vertexIndexKeys.size() > 0)
-                    populateKeyIndices(rawGraphDB, rawGraphDB.index().getNodeAutoIndexer(), graphOperations.getAllNodes(), Vertex.class);
+                    populateKeyIndices(rawGraphDB, rawGraphDB.index().getNodeAutoIndexer(), graphOperations.getAllNodes());
                 if (this.edgeIndexKeys.size() > 0)
-                    populateKeyIndices(rawGraphDB, rawGraphDB.index().getRelationshipAutoIndexer(), graphOperations.getAllRelationships(), Edge.class);
+                    populateKeyIndices(rawGraphDB, rawGraphDB.index().getRelationshipAutoIndexer(), graphOperations.getAllRelationships());
                 tx.success();
             } finally {
                 tx.close();
@@ -161,7 +159,7 @@ public class Neo4j2BatchGraph implements KeyIndexableGraph, IndexableGraph, Meta
         }
     }
 
-    private static <T extends PropertyContainer> void populateKeyIndices(final GraphDatabaseService rawGraphDB, final AutoIndexer<T> rawAutoIndexer, final Iterable<T> rawElements, final Class elementClass) {
+    private static <T extends PropertyContainer> void populateKeyIndices(final GraphDatabaseService rawGraphDB, final AutoIndexer<T> rawAutoIndexer, final Iterable<T> rawElements) {
         if (!rawAutoIndexer.isEnabled())
             return;
 
@@ -178,13 +176,13 @@ public class Neo4j2BatchGraph implements KeyIndexableGraph, IndexableGraph, Meta
                 if (count >= 10000) {
                     count = 0;
                     tx.success();
-                    tx.finish();
+                    tx.close();
                     tx = rawGraphDB.beginTx();
                 }
             }
         }
         tx.success();
-        tx.finish();
+        tx.close();
     }
 
     public String toString() {
