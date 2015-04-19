@@ -170,7 +170,8 @@ public class Neo4j2Graph implements TransactionalGraph, IndexableGraph, KeyIndex
         this(directory, null);
     }
     
-    public Neo4j2Graph(final Configuration configuration) {
+    @SuppressWarnings("unchecked")
+	public Neo4j2Graph(final Configuration configuration) {
         this(configuration.getString("blueprints.neo4j.directory", null),
                 ConfigurationConverter.getMap(configuration.subset("blueprints.neo4j.conf")));
     }
@@ -555,7 +556,9 @@ public class Neo4j2Graph implements TransactionalGraph, IndexableGraph, KeyIndex
         ((Relationship) ((Neo4j2Edge) edge).getRawElement()).delete();
     }
 
-    public void stopTransaction(Conclusion conclusion) {
+    @SuppressWarnings("deprecation")
+    @Override 
+	public void stopTransaction(Conclusion conclusion) {
         if (Conclusion.SUCCESS == conclusion)
             commit();
         else
