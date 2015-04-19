@@ -22,6 +22,8 @@ import com.tinkerpop.blueprints.util.StringFactory;
 /**
  * @author Marko A. Rodriguez (http://markorodriguez.com)
  * @author Joey Freund
+ * 
+ * FIXME: When iterating in BOTH directions, we should merge two existing iterables (to get consistent behaviour with Blueprints test cases)
  */
 public class Neo4j2Vertex extends Neo4j2Element implements Vertex {
 
@@ -113,9 +115,42 @@ public class Neo4j2Vertex extends Neo4j2Element implements Vertex {
 		
 		protected Iterator<Relationship> getRelationshipIterator(){
 			graph.autoStartTransaction(false);
-			return labels.length > 0 ? getRawVertex().getRelationships(direction, labels).iterator() : 
-									   getRawVertex().getRelationships(direction).iterator();
+			// This is the behaviour expected by Blueprint ...
+			if(this.direction.equals(Direction.INCOMING) || this.direction.equals(Direction.OUTGOING)){
+				return getRelationshipIterator(this.direction);
+			} else {
+				final Iterator<Relationship> incoming = getRelationshipIterator(Direction.INCOMING);
+				final Iterator<Relationship> outgoing = getRelationshipIterator(Direction.OUTGOING);
+				return new Iterator<Relationship>() {
+
+					@Override
+					public boolean hasNext() {
+						return incoming.hasNext() || outgoing.hasNext();
+					}
+
+					@Override
+					public Relationship next() {
+						if(incoming.hasNext()){
+							return incoming.next();
+						} else {
+							return outgoing.next();
+						}
+					}
+
+					@Override
+					public void remove() {
+						throw new UnsupportedOperationException();
+					}
+				};
+			}
 		}
+		
+		
+		private Iterator<Relationship> getRelationshipIterator(Direction direction){
+			return labels.length > 0 ? getRawVertex().getRelationships(direction, labels).iterator() : 
+				   getRawVertex().getRelationships(direction).iterator();
+		}
+		
 		
 	}
 
