@@ -37,6 +37,7 @@ public class Neo4j2ElementIterable<T extends PropertyContainer, S extends Elemen
 	
 	@Override
 	public Iterator<S> iterator() {
+		this.graph.autoStartTransaction(false);
 		return new Neo4j2ElementIterator<T, S>(this.elements, this.graph, this.skipCondition);
 	}
 
