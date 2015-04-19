@@ -10,10 +10,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.logging.Logger;
 
-import javax.transaction.Status;
-import javax.transaction.SystemException;
-import javax.transaction.TransactionManager;
-
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.configuration.ConfigurationConverter;
 import org.neo4j.cypher.ExecutionEngine;
@@ -32,7 +28,6 @@ import org.neo4j.graphdb.factory.GraphDatabaseBuilder;
 import org.neo4j.graphdb.factory.GraphDatabaseFactory;
 import org.neo4j.graphdb.index.AutoIndexer;
 import org.neo4j.graphdb.index.RelationshipIndex;
-import org.neo4j.kernel.GraphDatabaseAPI;
 import org.neo4j.tooling.GlobalGraphOperations;
 
 import com.tinkerpop.blueprints.Edge;
@@ -118,7 +113,7 @@ public class Neo4j2Graph implements TransactionalGraph, IndexableGraph, KeyIndex
         FEATURES.supportsThreadIsolatedTransactions = true;
     }
 
-    private final TransactionManager transactionManager;
+    
     private final ExecutionEngine cypher;
 
     protected boolean checkElementsInTransaction() {
@@ -154,8 +149,6 @@ public class Neo4j2Graph implements TransactionalGraph, IndexableGraph, KeyIndex
     public Neo4j2Graph(final GraphDatabaseService rawGraph) {
         this.rawGraph = rawGraph;
 
-        transactionManager = ((GraphDatabaseAPI) rawGraph).getDependencyResolver().resolveDependency(TransactionManager.class);
-
         cypher = new ExecutionEngine(rawGraph, null);
         init();
     }
@@ -168,7 +161,6 @@ public class Neo4j2Graph implements TransactionalGraph, IndexableGraph, KeyIndex
             else
                 this.rawGraph = builder.newGraphDatabase();
 
-            transactionManager = ((GraphDatabaseAPI) rawGraph).getDependencyResolver().resolveDependency(TransactionManager.class);
             cypher = new ExecutionEngine(rawGraph, null);
 
             init();
@@ -571,14 +563,8 @@ public class Neo4j2Graph implements TransactionalGraph, IndexableGraph, KeyIndex
             return;
         }
 
-        try {
-            javax.transaction.Transaction t = transactionManager.getTransaction();
-            if (t == null || t.getStatus() == Status.STATUS_ROLLEDBACK) {
-                return;
-            }
-            tx.get().failure();
-        } catch (SystemException e) {
-            throw new RuntimeException(e);
+        try{
+        	tx.get().failure();
         } finally {
             tx.get().close();
             tx.remove();
