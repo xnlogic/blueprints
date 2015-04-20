@@ -1,5 +1,6 @@
 package com.tinkerpop.blueprints.impls.neo4j2.batch;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -7,7 +8,10 @@ import java.util.Set;
 
 import org.neo4j.graphdb.DynamicRelationshipType;
 import org.neo4j.graphdb.GraphDatabaseService;
+import org.neo4j.graphdb.MultipleFoundException;
+import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.PropertyContainer;
+import org.neo4j.graphdb.ResourceIterator;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.graphdb.factory.GraphDatabaseBuilder;
 import org.neo4j.graphdb.factory.GraphDatabaseFactory;
@@ -29,6 +33,8 @@ import com.tinkerpop.blueprints.KeyIndexableGraph;
 import com.tinkerpop.blueprints.MetaGraph;
 import com.tinkerpop.blueprints.Parameter;
 import com.tinkerpop.blueprints.Vertex;
+import com.tinkerpop.blueprints.impls.neo4j2.Neo4j2Graph;
+import com.tinkerpop.blueprints.impls.neo4j2.Neo4j2Graph.InternallyUsedLabels;
 import com.tinkerpop.blueprints.util.ExceptionFactory;
 import com.tinkerpop.blueprints.util.StringFactory;
 
@@ -44,6 +50,16 @@ import com.tinkerpop.blueprints.util.StringFactory;
  * @author Marko A. Rodriguez (http://markorodriguez.com)
  */
 public class Neo4j2BatchGraph implements KeyIndexableGraph, IndexableGraph, MetaGraph<BatchInserter> {
+	
+	
+	private static BatchInserter createBatchInserter(String directory, Map<String, String> parameters){
+		if (null == parameters){
+            return BatchInserters.inserter(directory);
+		} else {
+            return BatchInserters.inserter(directory, parameters);
+		}
+	}
+	
 
     private final BatchInserter rawGraph;
     private final BatchInserterIndexProvider indexProvider;
@@ -94,24 +110,35 @@ public class Neo4j2BatchGraph implements KeyIndexableGraph, IndexableGraph, Meta
 
 
     public Neo4j2BatchGraph(final String directory) {
-        this.rawGraph = BatchInserters.inserter(directory);
-        this.indexProvider = new LuceneBatchInserterIndexProvider(this.rawGraph);
+        this(directory, null);
     }
 
     public Neo4j2BatchGraph(final String directory, final Map<String, String> parameters) {
-        if (null == parameters)
-            this.rawGraph = BatchInserters.inserter(directory);
-        else
-            this.rawGraph = BatchInserters.inserter(directory, parameters);
+    	this.loadPersistedAutoIndexes(directory, parameters);
+        this.rawGraph = createBatchInserter(directory, parameters);
         this.indexProvider = new LuceneBatchInserterIndexProvider(this.rawGraph);
     }
 
-    public Neo4j2BatchGraph(final BatchInserter rawGraph, final BatchInserterIndexProvider indexProvider) {
-        this.rawGraph = rawGraph;
-        this.indexProvider = indexProvider;
-    }
+    private void loadPersistedAutoIndexes(String directory, Map<String, String> parameters) {
+		GraphDatabaseService g = Neo4j2Graph.createBuilder(directory, parameters).newGraphDatabase();
+		Transaction tx = g.beginTx();
+    	
+    	try{
+    	
+			ResourceIterator<Node> nodes = g.findNodes(InternallyUsedLabels.Blueprints_GraphProperties);
+			if(nodes.hasNext()){
+				Node node = nodes.next();
+				this.vertexIndexKeys.addAll(Arrays.asList((String[]) node.getProperty(Neo4j2Graph.PROPERTY_KEY_AUTO_INDEXED_VERTEX_KEYS, new String[]{})));
+				this.edgeIndexKeys.addAll(Arrays.asList((String[]) node.getProperty(Neo4j2Graph.PROPERTY_KEY_AUTO_INDEXED_EDGE_KEYS, new String[]{})));
+			}
+    	} finally {
+    		tx.close();
+    		g.shutdown();
+    	}
+	}
+    
 
-    public void shutdown() {
+	public void shutdown() {
         this.flushIndices();
         this.indexProvider.shutdown();
         this.rawGraph.shutdown();
@@ -152,12 +179,51 @@ public class Neo4j2BatchGraph implements KeyIndexableGraph, IndexableGraph, Meta
             } finally {
                 tx.close();
             }
+            
+            // We persist the indexed keys so that, on the next startup, we can turn on auto-indexing for them.
+            persistKeyIndexes(rawGraphDB);
+            
         } catch (Exception e) {
             throw new RuntimeException(e.getMessage(), e);
         } finally {
             if (rawGraphDB != null) rawGraphDB.shutdown();
         }
     }
+    
+    
+    
+    
+    
+    private void persistKeyIndexes(GraphDatabaseService graph){
+    	// Get the node that stores the key-indexes (create it, if it doesn't exist) ...
+    	Node node = null;
+    	Transaction tx = graph.beginTx();
+    	
+    	try{
+    	
+			ResourceIterator<Node> nodes = graph.findNodes(InternallyUsedLabels.Blueprints_GraphProperties);
+			if(! nodes.hasNext()){ // Need to create the vertex ...
+				node = graph.createNode(InternallyUsedLabels.Blueprints_GraphProperties);
+				tx.success();
+			} else {
+				node = nodes.next();
+			}
+			
+			if(nodes.hasNext()){
+				throw new MultipleFoundException("There is more than one vertex with the label " + InternallyUsedLabels.Blueprints_GraphProperties);
+			}
+			
+			// Persist the key
+			node.setProperty(Neo4j2Graph.PROPERTY_KEY_AUTO_INDEXED_VERTEX_KEYS, this.vertexIndexKeys.toArray(new String[]{}));
+			node.setProperty(Neo4j2Graph.PROPERTY_KEY_AUTO_INDEXED_EDGE_KEYS, this.edgeIndexKeys.toArray(new String[]{}));
+			tx.success();
+			
+    	} finally {
+    		tx.close();
+    	}
+    }
+    
+    
 
     private static <T extends PropertyContainer> void populateKeyIndices(final GraphDatabaseService rawGraphDB, final AutoIndexer<T> rawAutoIndexer, final Iterable<T> rawElements) {
         if (!rawAutoIndexer.isEnabled())

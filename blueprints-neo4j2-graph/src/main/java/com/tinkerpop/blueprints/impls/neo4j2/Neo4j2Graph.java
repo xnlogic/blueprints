@@ -60,7 +60,7 @@ public class Neo4j2Graph implements TransactionalGraph, IndexableGraph, KeyIndex
     private static final Logger logger = Logger.getLogger(Neo4j2Graph.class.getName());
 
     
-    private static GraphDatabaseBuilder createBuilder(String directory, Map<String, String> configuration){
+    public static GraphDatabaseBuilder createBuilder(String directory, Map<String, String> configuration){
         GraphDatabaseBuilder builder = new GraphDatabaseFactory().newEmbeddedDatabaseBuilder(directory);
         if (null != configuration){
                 for(String key: configuration.keySet()){
@@ -75,8 +75,8 @@ public class Neo4j2Graph implements TransactionalGraph, IndexableGraph, KeyIndex
     
     
     public enum InternallyUsedLabels implements Label { Blueprints_GraphProperties };
-    private static final String PROPERTY_KEY_AUTO_INDEXED_VERTEX_KEYS = "AUTO_INDEXED_VERTEX_KEYS";
-    private static final String PROPERTY_KEY_AUTO_INDEXED_EDGE_KEYS = "AUTO_INDEXED_EDGE_KEYS";
+    public static final String PROPERTY_KEY_AUTO_INDEXED_VERTEX_KEYS = "AUTO_INDEXED_VERTEX_KEYS";
+    public static final String PROPERTY_KEY_AUTO_INDEXED_EDGE_KEYS = "AUTO_INDEXED_EDGE_KEYS";
     
     
     private static SkipCondition<Node> skipInternallyUsedNodes = new SkipCondition<Node>() {
