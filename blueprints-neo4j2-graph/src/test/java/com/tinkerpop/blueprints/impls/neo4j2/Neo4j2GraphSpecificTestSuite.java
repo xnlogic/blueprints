@@ -110,7 +110,7 @@ public class Neo4j2GraphSpecificTestSuite extends TestSuite {
         Vertex a = graph.addVertex(null);
         vertexIndex.put("name", "marko", a);
 
-        Iterator<?> ittyLuceneQuery = ((Neo4j2Index) graph.getIndex("vertices", Vertex.class)).query("name:*rko").iterator();
+        Iterator<?> ittyLuceneQuery = ((Neo4j2Index<?,?>) graph.getIndex("vertices", Vertex.class)).query("name:*rko").iterator();
         int counter = 0;
         while (ittyLuceneQuery.hasNext()) {
             counter++;
@@ -119,7 +119,7 @@ public class Neo4j2GraphSpecificTestSuite extends TestSuite {
         assertEquals(counter, 1);
 
         vertexIndex.put("name", "marko some_other name", graph.addVertex(null));
-        ittyLuceneQuery = ((Neo4j2Index) graph.getIndex("vertices", Vertex.class)).query("name:*rko*").iterator();
+        ittyLuceneQuery = ((Neo4j2Index<?,?>) graph.getIndex("vertices", Vertex.class)).query("name:*rko*").iterator();
 
         counter = 0;
         while (ittyLuceneQuery.hasNext()) {
