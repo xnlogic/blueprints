@@ -22,8 +22,6 @@ import com.tinkerpop.blueprints.util.StringFactory;
 /**
  * @author Marko A. Rodriguez (http://markorodriguez.com)
  * @author Joey Freund
- * 
- * FIXME: When iterating in BOTH directions, we should merge two existing iterables (to get consistent behaviour with Blueprints test cases)
  */
 public class Neo4j2Vertex extends Neo4j2Element implements Vertex {
 
@@ -34,11 +32,11 @@ public class Neo4j2Vertex extends Neo4j2Element implements Vertex {
 	}
 
 	public Iterable<Edge> getEdges(final com.tinkerpop.blueprints.Direction direction, final String... labels) {
-		return new Neo4jVertexEdgeIterable(direction, labels);
+		return new EdgeIterable(direction, labels);
 	}
 
 	public Iterable<Vertex> getVertices(final com.tinkerpop.blueprints.Direction direction, final String... labels) {
-		return new Neo4jVertexVertexIterable(direction, labels);
+		return new VertexIterable(direction, labels);
 	}
 
 	public Edge addEdge(final String label, final Vertex vertex) {
@@ -83,11 +81,15 @@ public class Neo4j2Vertex extends Neo4j2Element implements Vertex {
 
 	
 	
-	private abstract class Neo4jVertexElementIterable<T extends Element> implements Iterable<T> {
+	//=========================================================================
+	// Iterator and Iterable implementations ...
+	
+	
+	private abstract class ElementIterable<T extends Element> implements Iterable<T> {
 		protected final Direction direction;
 		protected final RelationshipType[] labels;
 		
-		public Neo4jVertexElementIterable(com.tinkerpop.blueprints.Direction direction, String... labels) {
+		public ElementIterable(com.tinkerpop.blueprints.Direction direction, String... labels) {
 			this.direction = toRawDirection(direction);
 			this.labels = toRelationshipTypes(labels);
 		}
@@ -153,37 +155,37 @@ public class Neo4j2Vertex extends Neo4j2Element implements Vertex {
 		
 		
 	}
+	
 
-
-	private class Neo4jVertexVertexIterable extends Neo4jVertexElementIterable<Vertex>  implements Iterable<Vertex> {
-		public Neo4jVertexVertexIterable(com.tinkerpop.blueprints.Direction direction, String[] labels) {
+	private class VertexIterable extends ElementIterable<Vertex>  implements Iterable<Vertex> {
+		public VertexIterable(com.tinkerpop.blueprints.Direction direction, String[] labels) {
 			super(direction, labels);
 		}
 
 		@Override
 		public Iterator<Vertex> iterator() {
-			return new VertexVertexIterator(getRelationshipIterator());
+			return new VertexIterator(getRelationshipIterator());
 		}
 	}
 	
 	
-	private class Neo4jVertexEdgeIterable extends Neo4jVertexElementIterable<Edge>  implements Iterable<Edge> {
-		public Neo4jVertexEdgeIterable(com.tinkerpop.blueprints.Direction direction, String[] labels) {
+	private class EdgeIterable extends ElementIterable<Edge>  implements Iterable<Edge> {
+		public EdgeIterable(com.tinkerpop.blueprints.Direction direction, String[] labels) {
 			super(direction, labels);
 		}
 
 		@Override
 		public Iterator<Edge> iterator() {
-			return new VertexEdgeIterator(getRelationshipIterator());
+			return new EdgeIterator(getRelationshipIterator());
 		}
 	}
 	
 	
 	
-	private abstract class VertexElementIterator<T extends Element> implements Iterator<T> {
+	private abstract class ElementIterator<T extends Element> implements Iterator<T> {
 		protected Iterator<Relationship> relationshipIterator;
 
-		public VertexElementIterator(Iterator<Relationship> relationshipIterator) {
+		public ElementIterator(Iterator<Relationship> relationshipIterator) {
 			this.relationshipIterator = relationshipIterator;
 		}
 		
@@ -201,9 +203,9 @@ public class Neo4j2Vertex extends Neo4j2Element implements Vertex {
 	
 	
 	
-	private class VertexEdgeIterator extends VertexElementIterator<Edge> implements Iterator<Edge>{
+	private class EdgeIterator extends ElementIterator<Edge> implements Iterator<Edge>{
 
-		public VertexEdgeIterator(Iterator<Relationship> relationshipIterator) {
+		public EdgeIterator(Iterator<Relationship> relationshipIterator) {
 			super(relationshipIterator);
 		}
 
@@ -215,9 +217,9 @@ public class Neo4j2Vertex extends Neo4j2Element implements Vertex {
 	}
 	
 	
-	private class VertexVertexIterator extends VertexElementIterator<Vertex> implements Iterator<Vertex>{
+	private class VertexIterator extends ElementIterator<Vertex> implements Iterator<Vertex>{
 
-		public VertexVertexIterator(Iterator<Relationship> relationshipIterator) {
+		public VertexIterator(Iterator<Relationship> relationshipIterator) {
 			super(relationshipIterator);
 		}
 
