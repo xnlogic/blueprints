@@ -43,12 +43,13 @@ public class Neo4j2ElementIterator<T extends PropertyContainer, S extends Elemen
     }
     
     protected boolean isDeleted(PropertyContainer element){
-    	try {
-			element.getProperty("dummy", null);
-			return false;
-		} catch (IllegalStateException e) {
-			return true;
-		}
+    	return element instanceof Node && this.graph.isDeletedVertexId(((Node)element).getId());
+//    	try {
+//			element.getProperty("dummy", null);
+//			return false;
+//		} catch (IllegalStateException e) {
+//			return true;
+//		}
     }
     
     

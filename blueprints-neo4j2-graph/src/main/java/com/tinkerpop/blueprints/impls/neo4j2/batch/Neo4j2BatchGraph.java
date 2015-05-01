@@ -183,8 +183,6 @@ public class Neo4j2BatchGraph implements KeyIndexableGraph, IndexableGraph, Meta
             // We persist the indexed keys so that, on the next startup, we can turn on auto-indexing for them.
             persistKeyIndexes(rawGraphDB);
             
-        } catch (Exception e) {
-            throw new RuntimeException(e.getMessage(), e);
         } finally {
             if (rawGraphDB != null) rawGraphDB.shutdown();
         }

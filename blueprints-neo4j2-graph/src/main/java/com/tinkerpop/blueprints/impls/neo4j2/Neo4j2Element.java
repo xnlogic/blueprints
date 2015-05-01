@@ -1,21 +1,21 @@
 package com.tinkerpop.blueprints.impls.neo4j2;
 
 
-import com.tinkerpop.blueprints.Edge;
-import com.tinkerpop.blueprints.Element;
-import com.tinkerpop.blueprints.Vertex;
-import com.tinkerpop.blueprints.util.ElementHelper;
-
-import org.neo4j.graphdb.Node;
-import org.neo4j.graphdb.PropertyContainer;
-import org.neo4j.graphdb.Relationship;
-
 import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
+
+import org.neo4j.graphdb.Node;
+import org.neo4j.graphdb.PropertyContainer;
+import org.neo4j.graphdb.Relationship;
+
+import com.tinkerpop.blueprints.Edge;
+import com.tinkerpop.blueprints.Element;
+import com.tinkerpop.blueprints.Vertex;
+import com.tinkerpop.blueprints.util.ElementHelper;
 
 /**
  * @author Marko A. Rodriguez (http://markorodriguez.com)
@@ -38,12 +38,35 @@ abstract class Neo4j2Element implements Element {
             return null;
     }
 
-    public void setProperty(final String key, final Object value) {
-        ElementHelper.validateProperty(this, key, value);
+    @Override
+    public void setProperty(final String key, Object value) {
+    	ElementHelper.validateProperty(this, key, value);
+    	// If the value is a collection, convert it to an Array, so that Neo4j can consume it.
+    	value = tryConvertCollectionToArray(value);
+    	validateSupportedValueType(value);
+    	
         this.graph.autoStartTransaction(true);
-        // attempts to take a collection and convert it to an array so that Neo4j can consume it
-        this.rawElement.setProperty(key, tryConvertCollectionToArray(value));
+        this.rawElement.setProperty(key, value);
     }
+    
+    
+    private void validateSupportedValueType(Object value){
+    	// Check that the value is of one of the supported types ...
+    	if (value instanceof Boolean || value instanceof Boolean[] || value instanceof boolean[] ||
+    		value instanceof Byte || value instanceof Byte[] || value instanceof byte[] ||
+    		value instanceof Short || value instanceof Short[] || value instanceof short[] ||
+    		value instanceof Integer || value instanceof Integer[] || value instanceof int[] ||
+    		value instanceof Long || value instanceof Long[] || value instanceof long[] ||
+    		value instanceof Float || value instanceof Float[] || value instanceof float[] ||
+    		value instanceof Double || value instanceof Double[] || value instanceof double[] ||
+    		value instanceof Character || value instanceof Character[] || value instanceof char[] ||
+    		value instanceof String || value instanceof String[]){
+    		return;
+    	}
+    	
+    	throw new IllegalArgumentException("Property values of type " + value.getClass().getCanonicalName() + " are not allowed.");
+    }
+    
 
     @SuppressWarnings("unchecked")
 	public <T> T removeProperty(final String key) {

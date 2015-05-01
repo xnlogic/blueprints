@@ -8,7 +8,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.logging.Logger;
 
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.configuration.ConfigurationConverter;
@@ -22,8 +21,6 @@ import org.neo4j.graphdb.NotFoundException;
 import org.neo4j.graphdb.PropertyContainer;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.ResourceIterator;
-import org.neo4j.graphdb.Transaction;
-import org.neo4j.graphdb.TransactionFailureException;
 import org.neo4j.graphdb.factory.GraphDatabaseBuilder;
 import org.neo4j.graphdb.factory.GraphDatabaseFactory;
 import org.neo4j.graphdb.index.AutoIndexer;
@@ -44,6 +41,7 @@ import com.tinkerpop.blueprints.Parameter;
 import com.tinkerpop.blueprints.TransactionalGraph;
 import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.impls.neo4j2.Neo4j2ElementIterator.SkipCondition;
+import com.tinkerpop.blueprints.impls.neo4j2.util.TransactionManager;
 import com.tinkerpop.blueprints.util.DefaultGraphQuery;
 import com.tinkerpop.blueprints.util.ExceptionFactory;
 import com.tinkerpop.blueprints.util.KeyIndexableGraphHelper;
@@ -56,10 +54,8 @@ import com.tinkerpop.blueprints.util.StringFactory;
  * @author Marko A. Rodriguez (http://markorodriguez.com)
  */
 public class Neo4j2Graph implements TransactionalGraph, IndexableGraph, KeyIndexableGraph, MetaGraph<GraphDatabaseService> {
-	
-    private static final Logger logger = Logger.getLogger(Neo4j2Graph.class.getName());
 
-    
+	
     public static GraphDatabaseBuilder createBuilder(String directory, Map<String, String> configuration){
         GraphDatabaseBuilder builder = new GraphDatabaseFactory().newEmbeddedDatabaseBuilder(directory);
         if (null != configuration){
@@ -72,6 +68,7 @@ public class Neo4j2Graph implements TransactionalGraph, IndexableGraph, KeyIndex
 
 
     private GraphDatabaseService rawGraph;
+    private TransactionManager txManager;
     
     
     public enum InternallyUsedLabels implements Label { Blueprints_GraphProperties };
@@ -89,11 +86,9 @@ public class Neo4j2Graph implements TransactionalGraph, IndexableGraph, KeyIndex
     
     
 
-    protected final ThreadLocal<Transaction> tx = new ThreadLocal<Transaction>() {
-        protected Transaction initialValue() {
-            return null;
-        }
-    };
+//    protected final ThreadLocal<Transaction> tx = new ThreadLocal<Transaction>() {
+//        
+//    };
 
     protected final ThreadLocal<Boolean> checkElementsInTransaction = new ThreadLocal<Boolean>() {
         protected Boolean initialValue() {
@@ -142,7 +137,7 @@ public class Neo4j2Graph implements TransactionalGraph, IndexableGraph, KeyIndex
     private final ExecutionEngine cypher;
 
     protected boolean checkElementsInTransaction() {
-        if (this.tx.get() == null) {
+        if (! txManager.isInTransaction()) {
             return false;
         } else {
             return this.checkElementsInTransaction.get();
@@ -184,6 +179,7 @@ public class Neo4j2Graph implements TransactionalGraph, IndexableGraph, KeyIndex
     public Neo4j2Graph(final GraphDatabaseService rawGraph) {
         try{
         	this.rawGraph = rawGraph;
+        	this.txManager = new TransactionManager(this.rawGraph);
         	cypher = new ExecutionEngine(rawGraph, StringLogger.DEV_NULL);
             init();
         } catch (RuntimeException e) {
@@ -516,6 +512,7 @@ public class Neo4j2Graph implements TransactionalGraph, IndexableGraph, KeyIndex
                 relationship.delete();
             }
             node.delete();
+            txManager.addDeletedVertexId(node.getId());
         } catch (NotFoundException nfe) {
             throw ExceptionFactory.vertexWithIdDoesNotExist(vertex.getId());
         } catch (IllegalStateException ise) {
@@ -567,39 +564,39 @@ public class Neo4j2Graph implements TransactionalGraph, IndexableGraph, KeyIndex
     }
 
     public void commit() {
-        if (null == tx.get()) {
-            return;
-        }
-
-        try {
-            tx.get().success();
-        } finally {
-            tx.get().close();
-            tx.remove();
-        }
+    	txManager.commit();
+//        if (null == tx.get()) {
+//            return;
+//        }
+//
+//        try {
+//            tx.get().success();
+//        } finally {
+//            tx.get().close();
+//            tx.remove();
+//        }
     }
 
     public void rollback() {
-        if (null == tx.get()) {
-            return;
-        }
-
-        try{
-        	tx.get().failure();
-        } finally {
-            tx.get().close();
-            tx.remove();
-        }
+    	txManager.rollback();
+//        if (null == tx.get()) {
+//            return;
+//        }
+//
+//        try{
+//        	tx.get().failure();
+//        } finally {
+//            tx.get().close();
+//            tx.remove();
+//        }
     }
 
     public void shutdown() {
         try {
-            this.commit();
-        } catch (TransactionFailureException e) {
-            logger.warning("Failure on shutdown "+e.getMessage());
-            // TODO: inspect why certain transactions fail
+        	txManager.shutdown();
+        } finally {
+        	this.rawGraph.shutdown();
         }
-        this.rawGraph.shutdown();
     }
 
     // The forWrite flag is true when the autoStartTransaction method is
@@ -610,8 +607,9 @@ public class Neo4j2Graph implements TransactionalGraph, IndexableGraph, KeyIndex
     // between the beginning of a write operation and the beginning of a read
     // operation.
     public void autoStartTransaction(boolean forWrite) {
-        if (tx.get() == null)
-            tx.set(this.rawGraph.beginTx());
+//        if (tx.get() == null)
+//            tx.set(this.rawGraph.beginTx());
+    	txManager.autoStartTransaction(forWrite);
     }
 
     public GraphDatabaseService getRawGraph() {
@@ -633,5 +631,9 @@ public class Neo4j2Graph implements TransactionalGraph, IndexableGraph, KeyIndex
     public Iterator<Map<String,Object>> query(String query, Map<String,Object> params) {
         return cypher.execute(query,params==null ? Collections.<String,Object>emptyMap() : params).javaIterator();
     }
+
+	public boolean isDeletedVertexId(long vertexId) {
+		return txManager.containsDeletedVertexId(vertexId);
+	}
 
 }
