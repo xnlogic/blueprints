@@ -83,12 +83,6 @@ public class Neo4j2Graph implements TransactionalGraph, IndexableGraph, KeyIndex
 		}
 	};
     
-    
-    
-
-//    protected final ThreadLocal<Transaction> tx = new ThreadLocal<Transaction>() {
-//        
-//    };
 
     protected final ThreadLocal<Boolean> checkElementsInTransaction = new ThreadLocal<Boolean>() {
         protected Boolean initialValue() {
@@ -554,6 +548,8 @@ public class Neo4j2Graph implements TransactionalGraph, IndexableGraph, KeyIndex
         ((Relationship) ((Neo4j2Edge) edge).getRawElement()).delete();
     }
 
+    
+    
     @SuppressWarnings("deprecation")
     @Override 
 	public void stopTransaction(Conclusion conclusion) {
@@ -562,33 +558,13 @@ public class Neo4j2Graph implements TransactionalGraph, IndexableGraph, KeyIndex
         else
             rollback();
     }
-
+    
     public void commit() {
     	txManager.commit();
-//        if (null == tx.get()) {
-//            return;
-//        }
-//
-//        try {
-//            tx.get().success();
-//        } finally {
-//            tx.get().close();
-//            tx.remove();
-//        }
     }
 
     public void rollback() {
     	txManager.rollback();
-//        if (null == tx.get()) {
-//            return;
-//        }
-//
-//        try{
-//        	tx.get().failure();
-//        } finally {
-//            tx.get().close();
-//            tx.remove();
-//        }
     }
 
     public void shutdown() {
@@ -599,19 +575,20 @@ public class Neo4j2Graph implements TransactionalGraph, IndexableGraph, KeyIndex
         }
     }
 
-    // The forWrite flag is true when the autoStartTransaction method is
-    // called before any operation which will modify the graph in any way. It
-    // is not used in this simple implementation but is required in subclasses
-    // which enforce transaction rules. Now that Neo4j reads also require a
-    // transaction to be open it is otherwise impossible to tell the difference
-    // between the beginning of a write operation and the beginning of a read
-    // operation.
+    /**
+     * Start a transaction, if one isn't already opened.
+     * 
+     * Note: The <code>forWrite</code> argument was added because, in Neo4j 2.x, transactions are required for both read and write operations.
+     * By adding this argument, we can keep track of whether or not the currently opened transaction is used for writing.
+     * 
+     * @param forWrite Indicate whether the transaction will be used for writing.
+     */
     public void autoStartTransaction(boolean forWrite) {
-//        if (tx.get() == null)
-//            tx.set(this.rawGraph.beginTx());
     	txManager.autoStartTransaction(forWrite);
     }
 
+    
+    
     public GraphDatabaseService getRawGraph() {
         return this.rawGraph;
     }
