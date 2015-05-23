@@ -1135,7 +1135,7 @@ public class GraphSONUtilityTest {
         // tinkergraph converts id to string
         Assert.assertEquals("1", v.getId());
         Assert.assertEquals("marko", v.getProperty("name"));
-        Assert.assertEquals(29, v.getProperty("age"));
+        Assert.assertEquals(29, (int) v.getProperty("age"));
     }
 
     @Test
@@ -1148,7 +1148,7 @@ public class GraphSONUtilityTest {
 
         Assert.assertSame(v, g.getVertex(1));
 
-        Assert.assertEquals((byte) 4, v.getProperty("byteValue"));
+        Assert.assertEquals((byte) 4, (byte) v.getProperty("byteValue"));
         Assert.assertEquals(new Short("10"), v.getProperty("shortValue"));
         Assert.assertEquals(true, v.getProperty("booleanValue"));
     }
@@ -1165,7 +1165,7 @@ public class GraphSONUtilityTest {
         // tinkergraph converts id to string
         Assert.assertEquals("1", v.getId());
         Assert.assertEquals("marko", v.getProperty("name"));
-        Assert.assertEquals(29, v.getProperty("age"));
+        Assert.assertEquals(29, (int) v.getProperty("age"));
     }
 
     @Test
@@ -1180,7 +1180,7 @@ public class GraphSONUtilityTest {
         // tinkergraph converts id to string
         Assert.assertEquals("1", v.getId());
         Assert.assertEquals("marko", v.getProperty("name"));
-        Assert.assertEquals(29, v.getProperty("age"));
+        Assert.assertEquals(29, (int) v.getProperty("age"));
     }
 
     @Test
@@ -1217,7 +1217,7 @@ public class GraphSONUtilityTest {
 
         // tinkergraph converts id to string
         Assert.assertEquals("7", e.getId());
-        Assert.assertEquals(0.5d, e.getProperty("weight"));
+        Assert.assertEquals(0.5d, (double) e.getProperty("weight"));
         Assert.assertEquals("knows", e.getLabel());
         Assert.assertEquals(v1, e.getVertex(Direction.OUT));
         Assert.assertEquals(v2, e.getVertex(Direction.IN));
@@ -1238,7 +1238,7 @@ public class GraphSONUtilityTest {
 
         // tinkergraph converts id to string
         Assert.assertEquals("7", e.getId());
-        Assert.assertEquals(0.5d, e.getProperty("weight"));
+        Assert.assertEquals(0.5d, (double) e.getProperty("weight"));
         Assert.assertEquals("knows", e.getLabel());
         Assert.assertEquals(v1, e.getVertex(Direction.OUT));
         Assert.assertEquals(v2, e.getVertex(Direction.IN));
