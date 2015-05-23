@@ -782,10 +782,10 @@ public class GraphMLReaderTestSuite extends TestSuite {
             assertNotNull(onlyOne);
             assertEquals(123.45d, onlyOne.getProperty("d"));
             assertEquals("some-string", onlyOne.getProperty("s"));
-            assertEquals(29, onlyOne.getProperty("i"));
-            assertEquals(true, onlyOne.getProperty("b"));
-            assertEquals(10000000l, onlyOne.getProperty("l"));
-            assertEquals(123.54f, onlyOne.getProperty("f"));
+            assertEquals(29, (int) onlyOne.getProperty("i"));
+            assertEquals(true, (boolean) onlyOne.getProperty("b"));
+            assertEquals(10000000l, (long) onlyOne.getProperty("l"));
+            assertEquals(123.54f, (float) onlyOne.getProperty("f"));
             assertEquals("junk", onlyOne.getProperty("n"));
         }
 
