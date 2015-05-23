@@ -14,6 +14,11 @@
     <name>Blueprints-Core</name>
     <description>Core interfaces and utilities for Blueprints</description>
     <dependencies>
+	    <dependency>
+		    <groupId>javax.xml</groupId>
+		    <artifactId>jaxp-api</artifactId>
+		    <version>1.4</version>
+		</dependency>
         <dependency>
             <groupId>org.codehaus.jettison</groupId>
             <artifactId>jettison</artifactId>
