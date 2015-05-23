@@ -1,22 +1,19 @@
 package com.tinkerpop.blueprints.util.io.gml;
 
-import com.tinkerpop.blueprints.Direction;
-import com.tinkerpop.blueprints.Edge;
-import com.tinkerpop.blueprints.Vertex;
-import com.tinkerpop.blueprints.impls.tg.TinkerGraph;
-
-import org.junit.Assert;
-import org.junit.Test;
-import sun.misc.IOUtils;
-
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.UUID;
+
+import org.junit.Assert;
+import org.junit.Test;
+
+import com.tinkerpop.blueprints.Direction;
+import com.tinkerpop.blueprints.Edge;
+import com.tinkerpop.blueprints.Vertex;
+import com.tinkerpop.blueprints.impls.tg.TinkerGraph;
 
 public class GMLReaderTest {
 
