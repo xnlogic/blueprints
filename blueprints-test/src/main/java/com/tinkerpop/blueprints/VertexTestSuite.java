@@ -241,8 +241,8 @@ public class VertexTestSuite extends TestSuite {
                 v1.setProperty("key2", 10);
                 v2.setProperty("key2", 20);
 
-                assertEquals(10, v1.getProperty("key2"));
-                assertEquals(20, v2.getProperty("key2"));
+                assertEquals(10, (int) v1.getProperty("key2"));
+                assertEquals(20, (int) v2.getProperty("key2"));
             }
 
         }
@@ -293,8 +293,8 @@ public class VertexTestSuite extends TestSuite {
                 v1.setProperty("key2", 10);
                 v2.setProperty("key2", 20);
 
-                assertEquals(10, v1.removeProperty("key2"));
-                assertEquals(20, v2.removeProperty("key2"));
+                assertEquals(10, (int) v1.removeProperty("key2"));
+                assertEquals(20, (int) v2.removeProperty("key2"));
             }
 
             assertNull(v1.removeProperty("key1"));
@@ -319,8 +319,8 @@ public class VertexTestSuite extends TestSuite {
                 }
 
                 if (graph.getFeatures().supportsIntegerProperty) {
-                    assertEquals(10, v1.removeProperty("key2"));
-                    assertEquals(20, v2.removeProperty("key2"));
+                    assertEquals(10, (int) v1.removeProperty("key2"));
+                    assertEquals(20, (int) v2.removeProperty("key2"));
                 }
 
                 assertNull(v1.removeProperty("key1"));
@@ -339,8 +339,8 @@ public class VertexTestSuite extends TestSuite {
                     v1.setProperty("key2", 20);
                     v2.setProperty("key2", 30);
 
-                    assertEquals(20, v1.removeProperty("key2"));
-                    assertEquals(30, v2.removeProperty("key2"));
+                    assertEquals(20, (int) v1.removeProperty("key2"));
+                    assertEquals(30, (int) v2.removeProperty("key2"));
                 }
 
                 assertNull(v1.removeProperty("key1"));
