@@ -434,7 +434,7 @@ public class EventGraphTest extends GraphTest {
         Vertex vertex = createVertex();
         vertex.setProperty("test", 123);
 
-        assertEquals(12345, vertex.getProperty("setInListener"));
+        assertEquals(12345, (long) vertex.getProperty("setInListener"));
         assertEquals(2, listener.vertexPropertyChangedEventRecorded());
     }
 }
