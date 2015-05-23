@@ -431,7 +431,7 @@ public class EventTransactionalGraphTest extends GraphTest {
         Vertex vertex = createVertex();
         vertex.setProperty("test", 123);
         graph.commit();
-        assertEquals(12345, (long) vertex.getProperty("setInListener"));
+        assertEquals(12345, (int) vertex.getProperty("setInListener"));
         assertEquals(2, listener.vertexPropertyChangedEventRecorded());
     }
 
