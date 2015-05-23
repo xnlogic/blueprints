@@ -1217,7 +1217,7 @@ public class GraphSONUtilityTest {
 
         // tinkergraph converts id to string
         Assert.assertEquals("7", e.getId());
-        Assert.assertEquals(0.5d, (double) e.getProperty("weight"));
+        Assert.assertEquals(0.5d, (double) e.getProperty("weight"), 0.001);
         Assert.assertEquals("knows", e.getLabel());
         Assert.assertEquals(v1, e.getVertex(Direction.OUT));
         Assert.assertEquals(v2, e.getVertex(Direction.IN));
@@ -1238,7 +1238,7 @@ public class GraphSONUtilityTest {
 
         // tinkergraph converts id to string
         Assert.assertEquals("7", e.getId());
-        Assert.assertEquals(0.5d, (double) e.getProperty("weight"));
+        Assert.assertEquals(0.5d, (double) e.getProperty("weight"), 0.001);
         Assert.assertEquals("knows", e.getLabel());
         Assert.assertEquals(v1, e.getVertex(Direction.OUT));
         Assert.assertEquals(v2, e.getVertex(Direction.IN));
