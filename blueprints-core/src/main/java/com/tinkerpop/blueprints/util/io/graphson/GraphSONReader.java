@@ -171,7 +171,6 @@ public class GraphSONReader {
         jp.close();
 
         graph.commit();
-        ;
     }
 
 
