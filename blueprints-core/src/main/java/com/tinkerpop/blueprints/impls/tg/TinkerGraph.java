@@ -39,7 +39,7 @@ public class TinkerGraph implements IndexableGraph, KeyIndexableGraph, Serializa
     protected Long currentId = 0l;
     protected Map<String, Vertex> vertices = new HashMap<String, Vertex>();
     protected Map<String, Edge> edges = new HashMap<String, Edge>();
-    protected Map<String, TinkerIndex> indices = new HashMap<String, TinkerIndex>();
+    protected Map<String, TinkerIndex<?>> indices = new HashMap<String, TinkerIndex<?>>();
 
     protected TinkerKeyIndex<TinkerVertex> vertexKeyIndex = new TinkerKeyIndex<TinkerVertex>(TinkerVertex.class, this);
     protected TinkerKeyIndex<TinkerEdge> edgeKeyIndex = new TinkerKeyIndex<TinkerEdge>(TinkerEdge.class, this);

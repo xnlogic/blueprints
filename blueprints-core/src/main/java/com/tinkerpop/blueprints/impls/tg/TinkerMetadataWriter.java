@@ -1,6 +1,7 @@
 package com.tinkerpop.blueprints.impls.tg;
 
 import com.tinkerpop.blueprints.Edge;
+import com.tinkerpop.blueprints.Element;
 import com.tinkerpop.blueprints.Vertex;
 
 import java.io.DataOutputStream;
@@ -92,12 +93,12 @@ class TinkerMetadataWriter {
         // Write the number of indices
         writer.writeInt(graph.indices.size());
 
-        for (Map.Entry<String, TinkerIndex> index : graph.indices.entrySet()) {
+        for (Map.Entry<String, TinkerIndex<?>> index : graph.indices.entrySet()) {
             // Write the index name
             writer.writeUTF(index.getKey());
 
-            TinkerIndex tinkerIndex = index.getValue();
-            Class indexClass = tinkerIndex.indexClass;
+            TinkerIndex<?> tinkerIndex = index.getValue();
+            Class<?> indexClass = tinkerIndex.indexClass;
 
             // Write the index type
             writer.writeByte(indexClass.equals(Vertex.class) ? 1 : 2);
@@ -105,17 +106,17 @@ class TinkerMetadataWriter {
             // Write the number of items associated with this index name
             writer.writeInt(tinkerIndex.index.size());
             for (Object o : tinkerIndex.index.entrySet()) {
-                Map.Entry tinkerIndexItem = (Map.Entry) o;
+                Map.Entry<?,?> tinkerIndexItem = (Map.Entry<?,?>) o;
 
                 // Write the item key
                 writer.writeUTF((String) tinkerIndexItem.getKey());
 
-                Map tinkerIndexItemSet = (Map) tinkerIndexItem.getValue();
+                Map<?,?> tinkerIndexItemSet = (Map<?,?>) tinkerIndexItem.getValue();
 
                 // Write the number of sub-items associated with this item
                 writer.writeInt(tinkerIndexItemSet.size());
                 for (Object p : tinkerIndexItemSet.entrySet()) {
-                    Map.Entry items = (Map.Entry) p;
+                    Map.Entry<?,?> items = (Map.Entry<?,?>) p;
 
                     if (indexClass.equals(Vertex.class)) {
                         Set<Vertex> vertices = (Set<Vertex>) items.getValue();
