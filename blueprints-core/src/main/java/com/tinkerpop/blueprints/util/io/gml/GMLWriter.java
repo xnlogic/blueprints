@@ -15,12 +15,14 @@ import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 /**
  * GMLWriter writes a Graph to a GML OutputStream.
@@ -224,7 +226,14 @@ public class GMLWriter {
     }
 
     private void writeProperties(final Writer writer, final Element e) throws IOException {
-        for (String key : e.getPropertyKeys()) {
+    	Collection<String> keys = null;
+    	if(normalize){
+    		keys = e.getPropertyKeys().stream().sorted().collect(Collectors.toList());
+    	} else {
+    		keys = e.getPropertyKeys();
+    	}
+    	
+        for (String key : keys) {
             if (!this.strict || regex.matcher(key).matches()) {
                 final Object property = e.getProperty(key);
                 writeKey(writer, key);
