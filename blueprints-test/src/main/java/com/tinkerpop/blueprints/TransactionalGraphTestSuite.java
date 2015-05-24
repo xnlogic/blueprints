@@ -294,7 +294,7 @@ public class TransactionalGraphTestSuite extends TestSuite {
             assertNotNull(v);
             assertEquals(v.getProperty("name"), "marko");
             v.setProperty("age", 30);
-            assertEquals(v.getProperty("age"), 30);
+            assertEquals((int) v.getProperty("age"), 30);
             graph.rollback();
             printPerformance(graph.toString(), 1, "integer property not added in a failed transaction", this.stopWatch());
 

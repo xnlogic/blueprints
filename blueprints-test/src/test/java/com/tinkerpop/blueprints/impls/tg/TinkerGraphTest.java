@@ -189,7 +189,7 @@ public class TinkerGraphTest extends GraphTest {
             }
             assertEquals(25, count(graph.getEdges()));
             for (final Edge e : graph.getEdges()) {
-                assertEquals(e.getProperty("weight"), 1);
+                assertEquals((int) e.getProperty("weight"), 1);
             }
 
             graph.shutdown();

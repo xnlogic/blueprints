@@ -203,7 +203,7 @@ public class GraphSONReaderTest {
             Assert.assertNotNull(v);
 
             for (String key : found.getPropertyKeys()) {
-                Assert.assertEquals(v.getProperty(key), found.getProperty(key));
+                Assert.assertEquals((Object) v.getProperty(key), (Object) found.getProperty(key));
             }
         }
 
@@ -213,7 +213,7 @@ public class GraphSONReaderTest {
             Assert.assertNotNull(e);
 
             for (String key : found.getPropertyKeys()) {
-                Assert.assertEquals(e.getProperty(key), found.getProperty(key));
+                Assert.assertEquals((Object) e.getProperty(key), (Object) found.getProperty(key));
             }
         }
 

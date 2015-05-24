@@ -38,7 +38,7 @@ public class GraphSONReaderTestSuite extends TestSuite {
             assertEquals(count(graph.getVertex(1).getEdges(Direction.IN)), 0);
             Vertex marko = graph.getVertex(1);
             assertEquals(marko.getProperty("name"), "marko");
-            assertEquals(marko.getProperty("age"), 29);
+            assertEquals((int) marko.getProperty("age"), 29);
             int counter = 0;
             for (Edge e : graph.getVertex(1).getEdges(Direction.OUT)) {
                 if (e.getVertex(Direction.IN).getId().toString().equals("2")) {
@@ -63,7 +63,7 @@ public class GraphSONReaderTestSuite extends TestSuite {
             assertEquals(count(graph.getVertex(4).getEdges(Direction.IN)), 1);
             Vertex josh = graph.getVertex(4);
             assertEquals(josh.getProperty("name"), "josh");
-            assertEquals(josh.getProperty("age"), 32);
+            assertEquals((int) josh.getProperty("age"), 32);
             for (Edge e : graph.getVertex(4).getEdges(Direction.OUT)) {
                 if (e.getVertex(Direction.IN).getId().toString().equals("3")) {
                     assertEquals(Math.round((Double) e.getProperty("weight")), 0);

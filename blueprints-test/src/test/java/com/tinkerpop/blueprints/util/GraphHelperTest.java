@@ -17,7 +17,7 @@ public class GraphHelperTest extends BaseTest {
         Graph graph = new TinkerGraph();
         Vertex vertex = GraphHelper.addVertex(graph, null, "name", "marko", "age", 31);
         assertEquals(vertex.getProperty("name"), "marko");
-        assertEquals(vertex.getProperty("age"), 31);
+        assertEquals((int) vertex.getProperty("age"), 31);
         assertEquals(vertex.getPropertyKeys().size(), 2);
         assertEquals(count(graph.getVertices()), 1);
 
@@ -60,11 +60,11 @@ public class GraphHelperTest extends BaseTest {
         assertEquals(count(h.getVertex("1").getEdges(Direction.IN)), 0);
         Vertex marko = h.getVertex("1");
         assertEquals(marko.getProperty("name"), "marko");
-        assertEquals(marko.getProperty("age"), 29);
+        assertEquals((int) marko.getProperty("age"), 29);
         int counter = 0;
         for (Edge e : h.getVertex("1").getEdges(Direction.OUT)) {
             if (e.getVertex(Direction.IN).getId().equals("2")) {
-                assertEquals(e.getProperty("weight"), 0.5f);
+                assertEquals((float) e.getProperty("weight"), 0.5f);
                 assertEquals(e.getLabel(), "knows");
                 assertEquals(e.getId(), "7");
                 counter++;
@@ -85,7 +85,7 @@ public class GraphHelperTest extends BaseTest {
         assertEquals(count(h.getVertex("4").getEdges(Direction.IN)), 1);
         Vertex josh = h.getVertex("4");
         assertEquals(josh.getProperty("name"), "josh");
-        assertEquals(josh.getProperty("age"), 32);
+        assertEquals((int) josh.getProperty("age"), 32);
         for (Edge e : h.getVertex("4").getEdges(Direction.OUT)) {
             if (e.getVertex(Direction.IN).getId().equals("3")) {
                 assertEquals(Math.round((Float) e.getProperty("weight")), 0);

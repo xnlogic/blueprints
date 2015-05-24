@@ -27,14 +27,14 @@ public class ElementHelperTest extends BaseTest {
         ElementHelper.copyProperties(v, u);
         assertEquals(u.getPropertyKeys().size(), 2);
         assertEquals(u.getProperty("name"), "marko");
-        assertEquals(u.getProperty("age"), 31);
+        assertEquals((int) u.getProperty("age"), 31);
     }
 
     public void testRemoveProperties() {
         Graph graph = TinkerGraphFactory.createTinkerGraph();
         Vertex vertex = graph.getVertex(1);
         assertEquals(vertex.getProperty("name"), "marko");
-        assertEquals(vertex.getProperty("age"), 29);
+        assertEquals((int) vertex.getProperty("age"), 29);
         assertEquals(vertex.getPropertyKeys().size(), 2);
 
         ElementHelper.removeProperties(Arrays.asList((Element) vertex));
@@ -146,7 +146,7 @@ public class ElementHelperTest extends BaseTest {
         assertEquals(vertex.getPropertyKeys().size(), 3);
         assertEquals(vertex.getProperty("name"), "dewilde");
         assertEquals(vertex.getProperty("country"), "belgium");
-        assertEquals(vertex.getProperty("age"), 50);
+        assertEquals((int) vertex.getProperty("age"), 50);
 
         try {
             ElementHelper.setProperties(vertex, "a", 12, "b");
