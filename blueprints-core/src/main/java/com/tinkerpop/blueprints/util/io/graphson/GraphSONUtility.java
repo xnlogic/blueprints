@@ -63,19 +63,19 @@ public class GraphSONUtility {
     /**
      * A GraphSONUtiltiy that includes all properties of vertices and edges.
      */
-    public GraphSONUtility(final GraphSONMode mode, final ElementFactory<?,?> factory) {
+    public GraphSONUtility(final GraphSONMode mode, final ElementFactory factory) {
         this(mode, factory, ElementPropertyConfig.AllProperties);
     }
 
     /**
      * A GraphSONUtility that includes the specified properties.
      */
-    public GraphSONUtility(final GraphSONMode mode, final ElementFactory<?,?> factory,
+    public GraphSONUtility(final GraphSONMode mode, final ElementFactory factory,
                            final Set<String> vertexPropertyKeys, final Set<String> edgePropertyKeys) {
         this(mode, factory, ElementPropertyConfig.includeProperties(vertexPropertyKeys, edgePropertyKeys));
     }
 
-    public GraphSONUtility(final GraphSONMode mode, final ElementFactory<?,?> factory,
+    public GraphSONUtility(final GraphSONMode mode, final ElementFactory factory,
                            final ElementPropertyConfig config) {
         this.vertexPropertyKeys = config.getVertexPropertyKeys();
         this.edgePropertyKeys = config.getEdgePropertyKeys();
@@ -266,7 +266,7 @@ public class GraphSONUtility {
      * @param mode         the mode of the GraphSON
      * @param propertyKeys a list of keys to include on reading of element properties
      */
-    public static Vertex vertexFromJson(final JSONObject json, final ElementFactory<?,?> factory, final GraphSONMode mode,
+    public static Vertex vertexFromJson(final JSONObject json, final ElementFactory factory, final GraphSONMode mode,
                                         final Set<String> propertyKeys) throws IOException {
         final GraphSONUtility graphson = new GraphSONUtility(mode, factory, propertyKeys, null);
         return graphson.vertexFromJson(json);
@@ -280,7 +280,7 @@ public class GraphSONUtility {
      * @param mode         the mode of the GraphSON
      * @param propertyKeys a list of keys to include on reading of element properties
      */
-    public static Vertex vertexFromJson(final String json, final ElementFactory<?,?> factory, final GraphSONMode mode,
+    public static Vertex vertexFromJson(final String json, final ElementFactory factory, final GraphSONMode mode,
                                         final Set<String> propertyKeys) throws IOException {
         final GraphSONUtility graphson = new GraphSONUtility(mode, factory, propertyKeys, null);
         return graphson.vertexFromJson(json);
@@ -294,7 +294,7 @@ public class GraphSONUtility {
      * @param mode         the mode of the GraphSON
      * @param propertyKeys a list of keys to include on reading of element properties
      */
-    public static Vertex vertexFromJson(final InputStream json, final ElementFactory<?,?> factory, final GraphSONMode mode,
+    public static Vertex vertexFromJson(final InputStream json, final ElementFactory factory, final GraphSONMode mode,
                                         final Set<String> propertyKeys) throws IOException {
         final GraphSONUtility graphson = new GraphSONUtility(mode, factory, propertyKeys, null);
         return graphson.vertexFromJson(json);
@@ -308,7 +308,7 @@ public class GraphSONUtility {
      * @param mode         the mode of the GraphSON
      * @param propertyKeys a list of keys to include on reading of element properties
      */
-    public static Vertex vertexFromJson(final JsonNode json, final ElementFactory<?,?> factory, final GraphSONMode mode,
+    public static Vertex vertexFromJson(final JsonNode json, final ElementFactory factory, final GraphSONMode mode,
                                         final Set<String> propertyKeys) throws IOException {
         final GraphSONUtility graphson = new GraphSONUtility(mode, factory, propertyKeys, null);
         return graphson.vertexFromJson(json);
@@ -323,7 +323,7 @@ public class GraphSONUtility {
      * @param propertyKeys a list of keys to include when reading of element properties
      */
     public static Edge edgeFromJson(final JSONObject json, final Vertex out, final Vertex in,
-                                    final ElementFactory<?,?> factory, final GraphSONMode mode,
+                                    final ElementFactory factory, final GraphSONMode mode,
                                     final Set<String> propertyKeys) throws IOException {
         final GraphSONUtility graphson = new GraphSONUtility(mode, factory, null, propertyKeys);
         return graphson.edgeFromJson(json, out, in);
@@ -338,7 +338,7 @@ public class GraphSONUtility {
      * @param propertyKeys a list of keys to include when reading of element properties
      */
     public static Edge edgeFromJson(final String json, final Vertex out, final Vertex in,
-                                    final ElementFactory<?,?> factory, final GraphSONMode mode,
+                                    final ElementFactory factory, final GraphSONMode mode,
                                     final Set<String> propertyKeys) throws IOException {
         final GraphSONUtility graphson = new GraphSONUtility(mode, factory, null, propertyKeys);
         return graphson.edgeFromJson(json, out, in);
@@ -353,7 +353,7 @@ public class GraphSONUtility {
      * @param propertyKeys a list of keys to include when reading of element properties
      */
     public static Edge edgeFromJson(final InputStream json, final Vertex out, final Vertex in,
-                                    final ElementFactory<?,?> factory, final GraphSONMode mode,
+                                    final ElementFactory factory, final GraphSONMode mode,
                                     final Set<String> propertyKeys) throws IOException {
         final GraphSONUtility graphson = new GraphSONUtility(mode, factory, null, propertyKeys);
         return graphson.edgeFromJson(json, out, in);
@@ -368,7 +368,7 @@ public class GraphSONUtility {
      * @param propertyKeys a list of keys to include when reading of element properties
      */
     public static Edge edgeFromJson(final JsonNode json, final Vertex out, final Vertex in,
-                                    final ElementFactory<?,?> factory, final GraphSONMode mode,
+                                    final ElementFactory factory, final GraphSONMode mode,
                                     final Set<String> propertyKeys) throws IOException {
         final GraphSONUtility graphson = new GraphSONUtility(mode, factory, null, propertyKeys);
         return graphson.edgeFromJson(json, out, in);
@@ -517,8 +517,8 @@ public class GraphSONUtility {
         return propertyValue;
     }
 
-    private static List<Object> readProperties(final Iterator<JsonNode> listOfNodes, final boolean hasEmbeddedTypes) {
-        final List<Object> array = new ArrayList<Object>();
+    private static List readProperties(final Iterator<JsonNode> listOfNodes, final boolean hasEmbeddedTypes) {
+        final List array = new ArrayList();
 
         while (listOfNodes.hasNext()) {
             array.add(readProperty(listOfNodes.next(), hasEmbeddedTypes));
@@ -527,16 +527,16 @@ public class GraphSONUtility {
         return array;
     }
 
-    private static ArrayNode createJSONList(final List<?> list, final List<String> propertyKeys, final boolean showTypes) {
+    private static ArrayNode createJSONList(final List list, final List<String> propertyKeys, final boolean showTypes) {
         final ArrayNode jsonList = jsonNodeFactory.arrayNode();
         for (Object item : list) {
             if (item instanceof Element) {
                 jsonList.add(objectNodeFromElement((Element) item, propertyKeys,
                         showTypes ? GraphSONMode.EXTENDED : GraphSONMode.NORMAL));
             } else if (item instanceof List) {
-                jsonList.add(createJSONList((List<?>) item, propertyKeys, showTypes));
+                jsonList.add(createJSONList((List) item, propertyKeys, showTypes));
             } else if (item instanceof Map) {
-                jsonList.add(createJSONMap((Map<?,?>) item, propertyKeys, showTypes));
+                jsonList.add(createJSONMap((Map) item, propertyKeys, showTypes));
             } else if (item != null && item.getClass().isArray()) {
                 jsonList.add(createJSONList(convertArrayToList(item), propertyKeys, showTypes));
             } else {
@@ -546,19 +546,19 @@ public class GraphSONUtility {
         return jsonList;
     }
 
-    private static ObjectNode createJSONMap(final Map<?,?> map, final List<String> propertyKeys, final boolean showTypes) {
+    private static ObjectNode createJSONMap(final Map map, final List<String> propertyKeys, final boolean showTypes) {
         final ObjectNode jsonMap = jsonNodeFactory.objectNode();
         for (Object key : map.keySet()) {
             Object value = map.get(key);
             if (value != null) {
                 if (value instanceof List) {
-                    value = createJSONList((List<?>) value, propertyKeys, showTypes);
+                    value = createJSONList((List) value, propertyKeys, showTypes);
                 } else if (value instanceof Iterable){
-                    value = createJSONList(getList((Iterable<?>) value), propertyKeys, showTypes);
+                    value = createJSONList(getList((Iterable) value), propertyKeys, showTypes);
                 } else if (value instanceof Iterator){
-                    value = createJSONList(getList((Iterator<?>) value), propertyKeys, showTypes);
+                    value = createJSONList(getList((Iterator) value), propertyKeys, showTypes);
                 } else if (value instanceof Map) {
-                    value = createJSONMap((Map<?,?>) value, propertyKeys, showTypes);
+                    value = createJSONMap((Map) value, propertyKeys, showTypes);
                 } else if (value instanceof Element) {
                     value = objectNodeFromElement((Element) value, propertyKeys,
                             showTypes ? GraphSONMode.EXTENDED : GraphSONMode.NORMAL);
@@ -573,12 +573,12 @@ public class GraphSONUtility {
 
     }
     
-	private static <T> List<T> getList(final Iterable<T> value) {
+	private static List getList(final Iterable value) {
         return getList(value.iterator());
 	}
 
-    private static <T> List<T> getList(final Iterator<T> value) {
-        final List<T> result = new ArrayList<T>();
+    private static List getList(final Iterator value) {
+        final List result = new ArrayList();
         while (value.hasNext()) {
             result.add(value.next());
         }
@@ -641,9 +641,9 @@ public class GraphSONUtility {
         }
     }
 
-    private static Map<String, Object> createPropertyMap(final Element element, final List<String> propertyKeys,
+    private static Map createPropertyMap(final Element element, final List<String> propertyKeys,
                                          final ElementPropertiesRule rule, final boolean normalized) {
-        final Map<String, Object> map = new HashMap<String, Object>();
+        final Map map = new HashMap<String, Object>();
         final List<String> propertyKeyList;
         if (normalized) {
             final List<String> sorted = new ArrayList<String>(element.getPropertyKeys());
@@ -718,7 +718,7 @@ public class GraphSONUtility {
                 // the entire object graph within the map.
                 ObjectNode convertedMap = jsonNodeFactory.objectNode();
                 ObjectNode jsonObject = (ObjectNode) value;
-                Iterator<String> keyIterator = jsonObject.fieldNames();
+                Iterator keyIterator = jsonObject.fieldNames();
                 while (keyIterator.hasNext()) {
                     Object key = keyIterator.next();
 
@@ -774,7 +774,7 @@ public class GraphSONUtility {
         return theValue;
     }
 
-    private static List<Object> convertArrayToList(final Object value) {
+    private static List convertArrayToList(final Object value) {
         final ArrayList<Object> list = new ArrayList<Object>();
         int arrlength = Array.getLength(value);
         for (int i = 0; i < arrlength; i++) {
