@@ -139,9 +139,9 @@ public class GraphSONReader {
     	final JsonParser jp = jsonFactory.createParser(jsonInputStream);
 
         // if this is a transactional graph then we're buffering
-        final BatchGraph graph = BatchGraph.wrap(inputGraph, bufferSize);
+        final BatchGraph<?> graph = BatchGraph.wrap(inputGraph, bufferSize);
 
-        final ElementFactory elementFactory = new GraphElementFactory(graph);
+        final ElementFactory<?,?> elementFactory = new GraphElementFactory(graph);
         GraphSONUtility graphson = new GraphSONUtility(GraphSONMode.NORMAL, elementFactory,
                 vertexPropertyKeys, edgePropertyKeys);
 
