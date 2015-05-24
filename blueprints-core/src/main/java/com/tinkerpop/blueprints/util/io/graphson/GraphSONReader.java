@@ -136,7 +136,7 @@ public class GraphSONReader {
     public static void inputGraph(final Graph inputGraph, final InputStream jsonInputStream, int bufferSize,
                                   final Set<String> edgePropertyKeys, final Set<String> vertexPropertyKeys) throws IOException {
 
-        final JsonParser jp = jsonFactory.createJsonParser(jsonInputStream);
+    	final JsonParser jp = jsonFactory.createParser(jsonInputStream);
 
         // if this is a transactional graph then we're buffering
         final BatchGraph graph = BatchGraph.wrap(inputGraph, bufferSize);
