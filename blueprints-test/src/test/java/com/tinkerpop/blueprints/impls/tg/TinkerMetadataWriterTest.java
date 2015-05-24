@@ -3,11 +3,14 @@ package com.tinkerpop.blueprints.impls.tg;
 import com.tinkerpop.blueprints.Edge;
 import com.tinkerpop.blueprints.Index;
 import com.tinkerpop.blueprints.Vertex;
+
 import junit.framework.TestCase;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+
+import org.junit.Assert;
 
 /**
  * @author Victor Su
@@ -24,12 +27,8 @@ public class TinkerMetadataWriterTest extends TestCase {
 
         byte[] expected = streamToByteArray(TinkerMetadataWriterTest.class.getResourceAsStream("example-tinkergraph-metadata.dat"));
         byte[] actual = bos.toByteArray();
-
-        assertEquals(expected.length, actual.length);
-
-        for (int ix = 0; ix < actual.length; ix++) {
-            assertEquals(expected[ix], actual[ix]);
-        }
+        
+        Assert.assertArrayEquals(expected, actual);
     }
 
     private void createKeyIndices(final TinkerGraph g) {
