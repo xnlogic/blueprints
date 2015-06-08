@@ -3,6 +3,8 @@ package com.tinkerpop.blueprints.util.io.graphson;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.MappingJsonFactory;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import com.tinkerpop.blueprints.Edge;
 import com.tinkerpop.blueprints.Graph;
 import com.tinkerpop.blueprints.Vertex;
@@ -63,7 +65,12 @@ public class GraphSONWriter {
         outputGraph(jsonOutputStream, vertexPropertyKeys, edgePropertyKeys, mode, false);
     }
 
-
+    /**
+     * This method doesn't fully normalize the output - It doesn't control the ordering of
+     * properties. This was noticed with the move to Java 8, where the underlying implementation
+     * of HashMap was changed.
+     */
+    @Deprecated
     public void outputGraph(final OutputStream jsonOutputStream, final Set<String> vertexPropertyKeys,
                             final Set<String> edgePropertyKeys, final GraphSONMode mode, final boolean normalize) throws IOException {
         final JsonGenerator jg = jsonFactory.createGenerator(jsonOutputStream);
@@ -82,7 +89,7 @@ public class GraphSONWriter {
 
         final Iterable<Vertex> vertices = vertices(normalize);
         for (Vertex v : vertices) {
-            jg.writeTree(graphson.objectNodeFromElement(v));
+        	jg.writeTree(graphson.objectNodeFromElement(v));
         }
 
         jg.writeEndArray();
@@ -91,7 +98,7 @@ public class GraphSONWriter {
 
         final Iterable<Edge> edges = edges(normalize);
         for (Edge e : edges) {
-            jg.writeTree(graphson.objectNodeFromElement(e));
+          jg.writeTree(graphson.objectNodeFromElement(e));
         }
         jg.writeEndArray();
 
