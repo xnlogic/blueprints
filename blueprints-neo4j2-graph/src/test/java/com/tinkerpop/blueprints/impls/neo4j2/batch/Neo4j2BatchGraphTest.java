@@ -204,8 +204,8 @@ public class Neo4j2BatchGraphTest extends BaseTest {
         }
 
         for (final Vertex vertex : graph.getVertices()) {
-            int age = (Integer) vertex.getProperty("age");
-            assertEquals(vertex.getProperty("NEW"), age);
+            int age = (int) vertex.getProperty("age");
+            assertEquals((int) vertex.getProperty("NEW"), age);
             assertEquals(vertex.getPropertyKeys().size(), 4);
             vertex.removeProperty("NEW");
         }
@@ -248,19 +248,19 @@ public class Neo4j2BatchGraphTest extends BaseTest {
             map.put("a", 1);
             map.put("b", 2);
             Vertex vertex = batch.addVertex(map);
-            assertEquals(vertex.getProperty("a"), 1);
-            assertEquals(vertex.getProperty("b"), 2);
+            assertEquals((int) vertex.getProperty("a"), 1);
+            assertEquals((int) vertex.getProperty("b"), 2);
             assertEquals(vertex.getPropertyKeys().size(), 2);
             vertex.setProperty("b", 3);
             vertex.setProperty("c", 4);
-            assertEquals(vertex.getProperty("a"), 1);
-            assertEquals(vertex.getProperty("b"), 3);
-            assertEquals(vertex.getProperty("c"), 4);
+            assertEquals((int) vertex.getProperty("a"), 1);
+            assertEquals((int) vertex.getProperty("b"), 3);
+            assertEquals((int) vertex.getProperty("c"), 4);
             assertEquals(vertex.getPropertyKeys().size(), 3);
-            assertEquals(vertex.removeProperty("a"), 1);
+            assertEquals((int) vertex.removeProperty("a"), 1);
             assertNull(vertex.getProperty("a"));
-            assertEquals(vertex.getProperty("b"), 3);
-            assertEquals(vertex.getProperty("c"), 4);
+            assertEquals((int) vertex.getProperty("b"), 3);
+            assertEquals((int) vertex.getProperty("c"), 4);
             assertEquals(vertex.getPropertyKeys().size(), 2);
             vertexIds.add((Long) vertex.getId());
         }
@@ -295,8 +295,8 @@ public class Neo4j2BatchGraphTest extends BaseTest {
         for (final Long id : vertexIds) {
             Vertex vertex = graph.getVertex(id);
             assertNull(vertex.getProperty("a"));
-            assertEquals(vertex.getProperty("b"), 3);
-            assertEquals(vertex.getProperty("c"), 4);
+            assertEquals((int) vertex.getProperty("b"), 3);
+            assertEquals((int) vertex.getProperty("c"), 4);
             assertEquals(vertex.getPropertyKeys().size(), 2);
         }
 
@@ -348,14 +348,14 @@ public class Neo4j2BatchGraphTest extends BaseTest {
         assertEquals(count(graph.getVertex("1").getEdges(Direction.IN)), 0);
         Vertex marko = graph.getVertex("1");
         assertEquals(marko.getProperty("name"), "marko");
-        assertEquals(marko.getProperty("age"), 29);
+        assertEquals((int) marko.getProperty("age"), 29);
         int counter = 0;
 
         assertEquals(count(graph.getVertex("4").getEdges(Direction.OUT)), 2);
         assertEquals(count(graph.getVertex("4").getEdges(Direction.IN)), 1);
         Vertex josh = graph.getVertex("4");
         assertEquals(josh.getProperty("name"), "josh");
-        assertEquals(josh.getProperty("age"), 32);
+        assertEquals((int) josh.getProperty("age"), 32);
         for (Edge e : graph.getVertex("4").getEdges(Direction.OUT)) {
             if (e.getVertex(Direction.IN).getId().equals(3l)) {
                 assertEquals(Math.round((Float) e.getProperty("weight")), 0);
